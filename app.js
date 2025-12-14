@@ -1,3 +1,123 @@
+// Group Manager - handles group ID generation and persistence
+class GroupManager {
+    constructor() {
+        this.storageKey = 'currentGroupId';
+        this.wordList = [
+            'alpha', 'beta', 'gamma', 'delta', 'echo', 'fox', 'golf', 'hotel',
+            'india', 'jazz', 'kilo', 'lima', 'mike', 'nova', 'oscar', 'papa',
+            'quick', 'red', 'star', 'tango', 'ultra', 'victor', 'wolf', 'xray',
+            'yellow', 'zero', 'blue', 'fire', 'ice', 'moon', 'sun', 'wave',
+            'rock', 'wind', 'sky', 'sea', 'code', 'data', 'tech', 'dev'
+        ];
+    }
+
+    // Generate random group ID: word1-word2-number
+    generateGroupId() {
+        const word1 = this.wordList[Math.floor(Math.random() * this.wordList.length)];
+        let word2 = this.wordList[Math.floor(Math.random() * this.wordList.length)];
+        
+        // Ensure word2 is different from word1
+        while (word2 === word1) {
+            word2 = this.wordList[Math.floor(Math.random() * this.wordList.length)];
+        }
+        
+        const number = Math.floor(Math.random() * 101); // 0-100
+        return `${word1}-${word2}-${number}`;
+    }
+
+    // Get or create group ID
+    getGroupId() {
+        let groupId = localStorage.getItem(this.storageKey);
+        if (!groupId) {
+            groupId = this.generateGroupId();
+            this.setGroupId(groupId);
+        }
+        return groupId;
+    }
+
+    // Set group ID
+    setGroupId(groupId) {
+        const normalized = groupId.trim().toLowerCase();
+        localStorage.setItem(this.storageKey, normalized);
+        return normalized;
+    }
+
+    // Clear group ID (for testing)
+    clearGroupId() {
+        localStorage.removeItem(this.storageKey);
+    }
+
+    // Get group ID from URL parameter
+    getGroupIdFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('group');
+    }
+
+    // Initialize group from URL if present
+    initFromUrl() {
+        const urlGroupId = this.getGroupIdFromUrl();
+        if (urlGroupId) {
+            this.setGroupId(urlGroupId);
+            console.log(`[GroupManager] Initialized from URL: ${urlGroupId}`);
+            return urlGroupId;
+        }
+        return null;
+    }
+
+    // Generate shareable URL
+    getShareUrl(groupId) {
+        const baseUrl = window.location.origin + window.location.pathname;
+        return `${baseUrl}?group=${encodeURIComponent(groupId)}`;
+    }
+
+    // Share group (copy to clipboard)
+    async shareGroup(groupId) {
+        if (!groupId) {
+            groupId = this.getGroupId();
+        }
+
+        const shareUrl = this.getShareUrl(groupId);
+
+        try {
+            // Try modern Clipboard API first
+            await navigator.clipboard.writeText(shareUrl);
+            console.log(`[GroupManager] Link copied: ${shareUrl}`);
+            return { success: true, url: shareUrl };
+        } catch (err) {
+            // Fallback for older browsers or mobile
+            console.warn('[GroupManager] Clipboard API failed, using fallback');
+            
+            // Create temporary textarea
+            const textarea = document.createElement('textarea');
+            textarea.value = shareUrl;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                const success = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                if (success) {
+                    console.log(`[GroupManager] Link copied (fallback): ${shareUrl}`);
+                    return { success: true, url: shareUrl };
+                } else {
+                    console.error('[GroupManager] Copy failed');
+                    return { success: false, url: shareUrl, error: 'Copy failed' };
+                }
+            } catch (err2) {
+                document.body.removeChild(textarea);
+                console.error('[GroupManager] Fallback copy failed:', err2);
+                return { success: false, url: shareUrl, error: err2.message };
+            }
+        }
+    }
+}
+
+// Global instance
+const groupManager = new GroupManager();
+
 // Game Manager - handles navigation between games
 class GameManager {
     constructor() {
@@ -75,6 +195,7 @@ class DivisionGame {
         this.resultsScreen = document.getElementById('divisionResultsScreen');
         
         // Setup screen
+        this.groupIdInput = document.getElementById('groupId');
         this.playerNameInput = document.getElementById('playerName');
         this.startBtn = document.getElementById('startDivisionBtn');
         this.difficultyBtns = this.setupScreen.querySelectorAll('.difficulty-btn');
@@ -131,10 +252,32 @@ class DivisionGame {
     }
 
     loadPlayerName() {
-        const saved = localStorage.getItem('playerName');
-        if (saved) {
-            this.playerNameInput.value = saved;
+        const savedName = localStorage.getItem('playerName');
+        if (savedName) {
+            this.playerNameInput.value = savedName;
         }
+        
+        // Load group ID
+        const savedGroupId = groupManager.getGroupId();
+        if (savedGroupId) {
+            this.groupIdInput.value = savedGroupId;
+        }
+    }
+    
+    getGroupId() {
+        // Get group ID from input or generate/use saved one
+        let groupId = this.groupIdInput.value.trim().toLowerCase();
+        
+        if (!groupId) {
+            // If empty, use existing or generate new
+            groupId = groupManager.getGroupId();
+            this.groupIdInput.value = groupId;
+        } else {
+            // Save the entered group ID
+            groupManager.setGroupId(groupId);
+        }
+        
+        return groupId;
     }
     
     loadDifficulty() {
@@ -219,15 +362,19 @@ class DivisionGame {
         
         localStorage.setItem('playerName', playerName);
         this.playerName = playerName;
+        this.groupId = this.getGroupId();
         
         this.currentQuestion = 0;
         this.score = 0;
         this.questions = [];
         this.gameInProgress = true;
         
+        // Генерираме правилния брой задачи според избора
         const types = ['div9', 'div6', 'div3', 'other'];
+        const questionsPerType = this.numQuestions / types.length; // 10/4=2.5 или 20/4=5
+        
         types.forEach(type => {
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < questionsPerType; i++) {
                 this.questions.push({
                     number: this.generateNumber(type),
                     type: type
@@ -235,13 +382,20 @@ class DivisionGame {
             }
         });
         
+        // Shuffle questions
         for (let i = this.questions.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [this.questions[i], this.questions[j]] = [this.questions[j], this.questions[i]];
         }
         
+        this.totalQuestions = this.questions.length; // Обновяваме total според реалния брой
+        
         this.setupScreen.classList.add('hidden');
         this.gameScreen.classList.remove('hidden');
+        
+        // Обновяваме UI елементите
+        this.totalQuestionsEl.textContent = this.totalQuestions;
+        this.maxScoreEl.textContent = this.totalQuestions * 10;
         
         this.setupBackButtonHandler();
         
@@ -419,13 +573,15 @@ class DivisionGame {
             score: finalScore,
             time: totalSeconds,
             scorePerMinute: scorePerMinute,
-            date: new Date().toLocaleString('bg-BG')
+            date: new Date().toLocaleString('bg-BG'),
+            timestamp: Date.now()
         });
         
         this.gameScreen.classList.add('hidden');
         this.resultsScreen.classList.remove('hidden');
         
-        this.renderLeaderboard();
+        // Render leaderboard (async)
+        this.renderLeaderboard().catch(err => console.error('[DivisionGame] Error rendering leaderboard:', err));
     }
 
     formatTime(seconds) {
@@ -434,36 +590,77 @@ class DivisionGame {
         return `${minutes}:${secs.toString().padStart(2, '0')}`;
     }
 
-    saveToLeaderboard(result) {
+    formatTimeAgo(timestamp) {
+        const now = Date.now();
+        const diff = now - timestamp;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        
+        if (days === 0) return 'днес';
+        if (days === 1) return 'преди 1 ден';
+        return `преди ${days} дни`;
+    }
+
+    async saveToLeaderboard(result) {
         const key = `leaderboard_division_${this.numQuestions}q_${this.difficulty}`;
+        
+        // Запазваме локално (backup)
         let leaderboard = JSON.parse(localStorage.getItem(key) || '[]');
         leaderboard.push(result);
         leaderboard.sort((a, b) => b.score - a.score);
         leaderboard = leaderboard.slice(0, 10);
         localStorage.setItem(key, JSON.stringify(leaderboard));
+        
+        // Записваме в Firebase
+        const config = {
+            numQuestions: this.numQuestions,
+            difficulty: this.difficulty,
+            groupId: this.groupId
+        };
+        await firebaseService.saveScore('division', config, result);
     }
 
-    renderLeaderboard() {
-        const key = `leaderboard_division_${this.numQuestions}q_${this.difficulty}`;
-        const leaderboard = JSON.parse(localStorage.getItem(key) || '[]');
+    async renderLeaderboard() {
+        // Вземи cloud leaderboard за текущата група
+        const config = {
+            numQuestions: this.numQuestions,
+            difficulty: this.difficulty,
+            groupId: this.groupId || groupManager.getGroupId()  // Fallback ако не е зададен
+        };
         
-        this.leaderboardDifficultyEl.textContent = `${this.numQuestions} задачи, ${this.difficultySettings[this.difficulty].name}`;
+        // Вземи от Firebase
+        const cloudLeaderboard = await firebaseService.getLeaderboard('division', config);
+        
+        // За instant feedback, добави последния резултат от localStorage ако не е във Firebase още
+        const key = `leaderboard_division_${this.numQuestions}q_${this.difficulty}`;
+        const localLeaderboard = JSON.parse(localStorage.getItem(key) || '[]');
+        
+        // Merge: Firebase е primary, localStorage за instant feedback
+        const leaderboard = await firebaseService.mergeLeaderboards(localLeaderboard, cloudLeaderboard, 10);
+        
+        // Показваме група + конфигурация
+        const groupName = config.groupId || 'default';
+        this.leaderboardDifficultyEl.textContent = `Група: ${groupName} | ${this.numQuestions} задачи, ${this.difficultySettings[this.difficulty].name}`;
         
         if (leaderboard.length === 0) {
-            this.leaderboardListEl.innerHTML = '<p style="text-align:center;color:#999;">Все още няма резултати</p>';
+            this.leaderboardListEl.innerHTML = '<p style="text-align:center;color:#999;">Все още няма резултати за тази група</p>';
             return;
         }
         
-        this.leaderboardListEl.innerHTML = leaderboard.map((entry, index) => `
+        this.leaderboardListEl.innerHTML = leaderboard.map((entry, index) => {
+            const timeAgo = entry.timestamp ? this.formatTimeAgo(entry.timestamp) : '';
+            const timeAgoHtml = timeAgo ? `<span style="color: #999; font-size: 0.85em;"> (${timeAgo})</span>` : '';
+            
+            return `
             <div class="leaderboard-entry">
                 <div class="leaderboard-rank">${index + 1}</div>
-                <div class="leaderboard-name">${entry.name}</div>
+                <div class="leaderboard-name">${entry.name}${timeAgoHtml}</div>
                 <div class="leaderboard-stats">
                     <div class="leaderboard-score">${entry.score}т</div>
                     <div>${this.formatTime(entry.time)} • ${entry.scorePerMinute}т/мин</div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     resetGame() {
@@ -512,6 +709,7 @@ class SubtractionGame {
         this.resultsScreen = document.getElementById('subtractionResultsScreen');
         
         // Setup screen
+        this.groupIdInput = document.getElementById('groupIdSubtraction');
         this.playerNameInput = document.getElementById('playerNameSubtraction');
         this.startBtn = document.getElementById('startSubtractionBtn');
         this.difficultyBtns = this.setupScreen.querySelectorAll('.difficulty-btn');
@@ -615,10 +813,32 @@ class SubtractionGame {
     }
 
     loadPlayerName() {
-        const saved = localStorage.getItem('playerName');
-        if (saved) {
-            this.playerNameInput.value = saved;
+        const savedName = localStorage.getItem('playerName');
+        if (savedName) {
+            this.playerNameInput.value = savedName;
         }
+        
+        // Load group ID
+        const savedGroupId = groupManager.getGroupId();
+        if (savedGroupId) {
+            this.groupIdInput.value = savedGroupId;
+        }
+    }
+    
+    getGroupId() {
+        // Get group ID from input or generate/use saved one
+        let groupId = this.groupIdInput.value.trim().toLowerCase();
+        
+        if (!groupId) {
+            // If empty, use existing or generate new
+            groupId = groupManager.getGroupId();
+            this.groupIdInput.value = groupId;
+        } else {
+            // Save the entered group ID
+            groupManager.setGroupId(groupId);
+        }
+        
+        return groupId;
     }
     
     loadConfig() {
@@ -823,6 +1043,7 @@ class SubtractionGame {
         
         localStorage.setItem('playerName', playerName);
         this.playerName = playerName;
+        this.groupId = this.getGroupId();
         
         this.currentQuestion = 0;
         this.score = 0;
@@ -1253,13 +1474,15 @@ class SubtractionGame {
             score: finalScore,
             time: totalSeconds,
             scorePerMinute: scorePerMinute,
-            date: new Date().toLocaleString('bg-BG')
+            date: new Date().toLocaleString('bg-BG'),
+            timestamp: Date.now()
         });
         
         this.gameScreen.classList.add('hidden');
         this.resultsScreen.classList.remove('hidden');
         
-        this.renderLeaderboard();
+        // Render leaderboard (async)
+        this.renderLeaderboard().catch(err => console.error('[SubtractionGame] Error rendering leaderboard:', err));
     }
 
     formatTime(seconds) {
@@ -1268,42 +1491,86 @@ class SubtractionGame {
         return `${minutes}:${secs.toString().padStart(2, '0')}`;
     }
 
-    saveToLeaderboard(result) {
+    formatTimeAgo(timestamp) {
+        const now = Date.now();
+        const diff = now - timestamp;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        
+        if (days === 0) return 'днес';
+        if (days === 1) return 'преди 1 ден';
+        return `преди ${days} дни`;
+    }
+
+    async saveToLeaderboard(result) {
         // Include configuration in leaderboard key
         const opsKey = this.operations.sort().join('_');
         const key = `leaderboard_math_${this.numQuestions}q_${this.numDigits}d_${opsKey}_${this.difficulty}`;
+        
+        // Запазваме локално (backup)
         let leaderboard = JSON.parse(localStorage.getItem(key) || '[]');
         leaderboard.push(result);
         leaderboard.sort((a, b) => b.score - a.score);
         leaderboard = leaderboard.slice(0, 10);
         localStorage.setItem(key, JSON.stringify(leaderboard));
+        
+        // Записваме в Firebase
+        const config = {
+            numQuestions: this.numQuestions,
+            numDigits: this.numDigits,
+            operations: this.operations,
+            difficulty: this.difficulty,
+            groupId: this.groupId
+        };
+        await firebaseService.saveScore('math', config, result);
     }
 
-    renderLeaderboard() {
+    async renderLeaderboard() {
+        // Вземи cloud leaderboard за текущата група
+        const config = {
+            numQuestions: this.numQuestions,
+            numDigits: this.numDigits,
+            operations: this.operations,
+            difficulty: this.difficulty,
+            groupId: this.groupId || groupManager.getGroupId()  // Fallback ако не е зададен
+        };
+        
+        // Вземи от Firebase
+        const cloudLeaderboard = await firebaseService.getLeaderboard('math', config);
+        
+        // За instant feedback, добави последния резултат от localStorage ако не е във Firebase още
         const opsKey = this.operations.sort().join('_');
         const key = `leaderboard_math_${this.numQuestions}q_${this.numDigits}d_${opsKey}_${this.difficulty}`;
-        const leaderboard = JSON.parse(localStorage.getItem(key) || '[]');
+        const localLeaderboard = JSON.parse(localStorage.getItem(key) || '[]');
+        
+        // Merge: Firebase е primary, localStorage за instant feedback
+        const leaderboard = await firebaseService.mergeLeaderboards(localLeaderboard, cloudLeaderboard, 10);
         
         const opsLabel = this.operations.map(op => 
             op === 'addition' ? '+' : '−'
         ).join(', ');
-        this.leaderboardDifficultyEl.textContent = `${this.numQuestions} задачи, ${this.numDigits} цифри, ${opsLabel}, ${this.difficultySettings[this.difficulty].name}`;
+        const groupName = config.groupId || 'default';
+        this.leaderboardDifficultyEl.textContent = `Група: ${groupName} | ${this.numQuestions} задачи, ${this.numDigits} цифри, ${opsLabel}, ${this.difficultySettings[this.difficulty].name}`;
         
         if (leaderboard.length === 0) {
-            this.leaderboardListEl.innerHTML = '<p style="text-align:center;color:#999;">Все още няма резултати</p>';
+            this.leaderboardListEl.innerHTML = '<p style="text-align:center;color:#999;">Все още няма резултати за тази група</p>';
             return;
         }
         
-        this.leaderboardListEl.innerHTML = leaderboard.map((entry, index) => `
+        this.leaderboardListEl.innerHTML = leaderboard.map((entry, index) => {
+            const timeAgo = entry.timestamp ? this.formatTimeAgo(entry.timestamp) : '';
+            const timeAgoHtml = timeAgo ? `<span style="color: #999; font-size: 0.85em;"> (${timeAgo})</span>` : '';
+            
+            return `
             <div class="leaderboard-entry">
                 <div class="leaderboard-rank">${index + 1}</div>
-                <div class="leaderboard-name">${entry.name}</div>
+                <div class="leaderboard-name">${entry.name}${timeAgoHtml}</div>
                 <div class="leaderboard-stats">
                     <div class="leaderboard-score">${entry.score}т</div>
                     <div>${this.formatTime(entry.time)} • ${entry.scorePerMinute}т/мин</div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     resetGame() {
@@ -1319,7 +1586,62 @@ class SubtractionGame {
 
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize group from URL if present
+    groupManager.initFromUrl();
+    
     const gameManager = new GameManager();
-    new DivisionGame(gameManager);
-    new SubtractionGame(gameManager);
+    const divisionGame = new DivisionGame(gameManager);
+    const subtractionGame = new SubtractionGame(gameManager);
+    
+    // Setup share buttons
+    const shareBtn = document.getElementById('shareGroupBtn');
+    const shareBtnSubtraction = document.getElementById('shareGroupBtnSubtraction');
+    
+    if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+            const groupIdInput = document.getElementById('groupId');
+            let groupId = groupIdInput.value.trim().toLowerCase();
+            
+            // If empty, generate one first
+            if (!groupId) {
+                groupId = groupManager.getGroupId();
+                groupIdInput.value = groupId;
+            }
+            
+            const result = await groupManager.shareGroup(groupId);
+            
+            if (result.success) {
+                shareBtn.textContent = '✅ Копирано!';
+                setTimeout(() => {
+                    shareBtn.innerHTML = '🔗 Сподели';
+                }, 2000);
+            } else {
+                alert('Грешка при копиране: ' + (result.error || 'Непозната грешка'));
+            }
+        });
+    }
+    
+    if (shareBtnSubtraction) {
+        shareBtnSubtraction.addEventListener('click', async () => {
+            const groupIdInput = document.getElementById('groupIdSubtraction');
+            let groupId = groupIdInput.value.trim().toLowerCase();
+            
+            // If empty, generate one first
+            if (!groupId) {
+                groupId = groupManager.getGroupId();
+                groupIdInput.value = groupId;
+            }
+            
+            const result = await groupManager.shareGroup(groupId);
+            
+            if (result.success) {
+                shareBtnSubtraction.textContent = '✅ Копирано!';
+                setTimeout(() => {
+                    shareBtnSubtraction.innerHTML = '🔗 Сподели';
+                }, 2000);
+            } else {
+                alert('Грешка при копиране: ' + (result.error || 'Непозната грешка'));
+            }
+        });
+    }
 });

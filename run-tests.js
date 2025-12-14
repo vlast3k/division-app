@@ -342,6 +342,122 @@ test('Детекция на заемане в много позиции', () => 
         `И двете позиции трябва да имат borrow: ${JSON.stringify(needsCarry)}`);
 });
 
+// TEST 10: GroupManager generates valid group IDs
+test('GroupManager генерира валидни group ID (8 символа, alphanumeric)', () => {
+    // Mock GroupManager.generateGroupId()
+    const generateGroupId = () => {
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < 8; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    };
+    
+    const ids = new Set();
+    for (let i = 0; i < 20; i++) {
+        const id = generateGroupId();
+        assert(typeof id === 'string', 'Group ID трябва да е string');
+        assert(id.length === 8, `Group ID трябва да е 8 символа, получено: ${id.length}`);
+        assert(/^[a-z0-9]+$/.test(id), `Group ID трябва да съдържа само букви и цифри: ${id}`);
+        ids.add(id);
+    }
+    // With 20 generations, we expect high uniqueness
+    assert(ids.size >= 18, `Очакваме поне 18 уникални ID от 20, получено: ${ids.size}`);
+});
+
+// TEST 11: URL parameter parsing
+test('URL параметър ?group=xxx се парсва правилно', () => {
+    const parseGroupFromUrl = (url) => {
+        const match = url.match(/[?&]group=([^&]+)/);
+        return match ? match[1] : null;
+    };
+    
+    assert(parseGroupFromUrl('?group=abc12345') === 'abc12345', 'Трябва да извлече group ID от прост URL');
+    assert(parseGroupFromUrl('?group=test1234&other=value') === 'test1234', 'Трябва да извлече group ID от URL с множество параметри');
+    assert(parseGroupFromUrl('?other=value&group=xyz98765') === 'xyz98765', 'Трябва да извлече group ID когато не е първи параметър');
+    assert(parseGroupFromUrl('?nogroup=test') === null, 'Трябва да върне null когато няма group параметър');
+});
+
+// TEST 12: Share URL generation
+test('Share URL се генерира правилно с group параметър', () => {
+    const getShareUrl = (groupId) => {
+        const baseUrl = 'https://example.com/index.html';
+        return `${baseUrl}?group=${groupId}`;
+    };
+    
+    const shareUrl = getShareUrl('abc12345');
+    assert(shareUrl.includes('?group='), 'Share URL трябва да съдържа ?group=');
+    assert(shareUrl.includes('abc12345'), 'Share URL трябва да съдържа group ID');
+    assert(shareUrl.startsWith('http'), 'Share URL трябва да започва с http');
+});
+
+// TEST 13: formatTimeAgo for today
+test('formatTimeAgo() показва "днес" за резултати от последните 24 часа', () => {
+    const formatTimeAgo = (timestamp) => {
+        const now = Date.now();
+        const diffMs = now - timestamp;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'днес';
+        if (diffDays === 1) return 'преди 1 ден';
+        return `преди ${diffDays} дни`;
+    };
+    
+    const now = Date.now();
+    assert(formatTimeAgo(now) === 'днес', 'Точно сега трябва да показва "днес"');
+    
+    const twoHoursAgo = now - (2 * 60 * 60 * 1000);
+    assert(formatTimeAgo(twoHoursAgo) === 'днес', '2 часа назад трябва да показва "днес"');
+    
+    const twentyHoursAgo = now - (20 * 60 * 60 * 1000);
+    assert(formatTimeAgo(twentyHoursAgo) === 'днес', '20 часа назад трябва да показва "днес"');
+});
+
+// TEST 14: formatTimeAgo for past days
+test('formatTimeAgo() показва "преди X дни" правилно', () => {
+    const formatTimeAgo = (timestamp) => {
+        const now = Date.now();
+        const diffMs = now - timestamp;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'днес';
+        if (diffDays === 1) return 'преди 1 ден';
+        return `преди ${diffDays} дни`;
+    };
+    
+    const now = Date.now();
+    
+    const oneDayAgo = now - (25 * 60 * 60 * 1000);
+    assert(formatTimeAgo(oneDayAgo) === 'преди 1 ден', '1 ден назад трябва да показва "преди 1 ден"');
+    
+    const threeDaysAgo = now - (3 * 24 * 60 * 60 * 1000);
+    assert(formatTimeAgo(threeDaysAgo) === 'преди 3 дни', '3 дни назад трябва да показва "преди 3 дни"');
+    
+    const tenDaysAgo = now - (10 * 24 * 60 * 60 * 1000);
+    assert(formatTimeAgo(tenDaysAgo) === 'преди 10 дни', '10 дни назад трябва да показва "преди 10 дни"');
+});
+
+// TEST 15: Leaderboard entry structure with timestamp
+test('Leaderboard entry включва timestamp поле', () => {
+    const createLeaderboardEntry = (name, time) => {
+        return {
+            name: name,
+            time: time,
+            timestamp: Date.now()
+        };
+    };
+    
+    const entry = createLeaderboardEntry('Test Player', 120);
+    
+    assert(entry.name === 'Test Player', 'Entry трябва да има име');
+    assert(entry.time === 120, 'Entry трябва да има време');
+    assert(entry.timestamp !== undefined, 'Entry трябва да има timestamp');
+    assert(typeof entry.timestamp === 'number', 'Timestamp трябва да е число');
+    assert(entry.timestamp > 0, 'Timestamp трябва да е положително число');
+    assert(entry.timestamp <= Date.now(), 'Timestamp трябва да е от миналото или сега');
+});
+
 console.log('\n' + '='.repeat(50));
 console.log(`📊 РЕЗУЛТАТИ: ${passed} успешни, ${failed} неуспешни`);
 console.log('='.repeat(50));

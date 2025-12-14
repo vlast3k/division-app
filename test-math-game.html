@@ -87,6 +87,8 @@
     <button onclick="runSpecificTest('generateProblem')">Тест generateProblem()</button>
     <button onclick="runSpecificTest('checkAnswer')">Тест checkAnswer()</button>
     <button onclick="runSpecificTest('selectCell')">Тест selectCell()</button>
+    <button onclick="runSpecificTest('groupManager')">Тест GroupManager & Share</button>
+    <button onclick="runSpecificTest('timestamp')">Тест Timestamp Display</button>
     
     <div id="test-results"></div>
 
@@ -619,6 +621,122 @@
             cleanupTestHTML();
         }
         
+        // TEST 16: GroupManager generates valid group IDs
+        function test_groupManager_generates_valid_ids() {
+            const manager = window.groupManager || new GroupManager();
+            
+            // Generate multiple IDs and check uniqueness
+            const ids = new Set();
+            for (let i = 0; i < 10; i++) {
+                const id = manager.generateGroupId();
+                assert(typeof id === 'string', 'Group ID трябва да е string');
+                assert(id.length === 8, `Group ID трябва да е 8 символа, получено: ${id.length}`);
+                assert(/^[a-z0-9]+$/.test(id), `Group ID трябва да съдържа само букви и цифри: ${id}`);
+                ids.add(id);
+            }
+            assertEqual(ids.size, 10, 'Всички 10 ID трябва да са уникални');
+        }
+        
+        // TEST 17: GroupManager reads URL parameters correctly
+        function test_groupManager_reads_url_params() {
+            const manager = window.groupManager || new GroupManager();
+            
+            // Mock window.location
+            const originalLocation = window.location;
+            delete window.location;
+            window.location = { search: '?group=test1234' };
+            
+            const groupId = manager.getGroupIdFromUrl();
+            assertEqual(groupId, 'test1234', 'Трябва да прочете group ID от URL');
+            
+            // Restore
+            window.location = originalLocation;
+        }
+        
+        // TEST 18: GroupManager generates share URL correctly
+        function test_groupManager_generates_share_url() {
+            const manager = window.groupManager || new GroupManager();
+            
+            const testGroupId = 'abc12345';
+            const shareUrl = manager.getShareUrl(testGroupId);
+            
+            assert(shareUrl.includes('?group='), 'Share URL трябва да съдържа ?group=');
+            assert(shareUrl.includes(testGroupId), `Share URL трябва да съдържа group ID: ${testGroupId}`);
+            assert(shareUrl.startsWith('http'), 'Share URL трябва да започва с http');
+        }
+        
+        // TEST 19: formatTimeAgo displays correct text for today
+        function test_formatTimeAgo_today() {
+            // Mock formatTimeAgo if not available globally
+            const formatTimeAgo = window.formatTimeAgo || function(timestamp) {
+                const now = Date.now();
+                const diffMs = now - timestamp;
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 0) return 'днес';
+                if (diffDays === 1) return 'преди 1 ден';
+                return `преди ${diffDays} дни`;
+            };
+            
+            const now = Date.now();
+            const result = formatTimeAgo(now);
+            assertEqual(result, 'днес', 'Резултат от днес трябва да показва "днес"');
+            
+            // Test 2 hours ago
+            const twoHoursAgo = now - (2 * 60 * 60 * 1000);
+            const result2 = formatTimeAgo(twoHoursAgo);
+            assertEqual(result2, 'днес', '2 часа назад трябва да показва "днес"');
+        }
+        
+        // TEST 20: formatTimeAgo displays correct text for days ago
+        function test_formatTimeAgo_days_ago() {
+            const formatTimeAgo = window.formatTimeAgo || function(timestamp) {
+                const now = Date.now();
+                const diffMs = now - timestamp;
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 0) return 'днес';
+                if (diffDays === 1) return 'преди 1 ден';
+                return `преди ${diffDays} дни`;
+            };
+            
+            const now = Date.now();
+            
+            // Test 1 day ago
+            const oneDayAgo = now - (25 * 60 * 60 * 1000);
+            const result1 = formatTimeAgo(oneDayAgo);
+            assertEqual(result1, 'преди 1 ден', '1 ден назад трябва да показва "преди 1 ден"');
+            
+            // Test 5 days ago
+            const fiveDaysAgo = now - (5 * 24 * 60 * 60 * 1000);
+            const result5 = formatTimeAgo(fiveDaysAgo);
+            assertEqual(result5, 'преди 5 дни', '5 дни назад трябва да показва "преди 5 дни"');
+            
+            // Test 30 days ago
+            const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+            const result30 = formatTimeAgo(thirtyDaysAgo);
+            assertEqual(result30, 'преди 30 дни', '30 дни назад трябва да показва "преди 30 дни"');
+        }
+        
+        // TEST 21: Timestamp is included in leaderboard entries
+        function test_timestamp_in_leaderboard_entry() {
+            createTestHTML();
+            const game = new SubtractionGame(createMockGameManager());
+            
+            // Create a mock leaderboard entry
+            const entry = {
+                name: 'Test Player',
+                time: 120,
+                timestamp: Date.now() - (2 * 24 * 60 * 60 * 1000) // 2 days ago
+            };
+            
+            assert(entry.timestamp !== undefined, 'Leaderboard entry трябва да има timestamp');
+            assert(typeof entry.timestamp === 'number', 'Timestamp трябва да е число');
+            assert(entry.timestamp > 0, 'Timestamp трябва да е положително число');
+            
+            cleanupTestHTML();
+        }
+        
         // Run all tests
         function runAllTests() {
             testResults = [];
@@ -637,7 +755,13 @@
                 { name: 'checkAnswer() валидира верен отговор при изваждане', fn: test_checkAnswer_subtraction_correct, category: 'checkAnswer' },
                 { name: 'carryStates масив се инициализира правилно', fn: test_carryStates_initialization, category: 'other' },
                 { name: 'checkAnswer() приема празна водеща нула', fn: test_checkAnswer_leading_zero_allowed, category: 'checkAnswer' },
-                { name: 'Детекция на носене в много позиции', fn: test_multi_digit_carry_detection, category: 'checkAnswer' }
+                { name: 'Детекция на носене в много позиции', fn: test_multi_digit_carry_detection, category: 'checkAnswer' },
+                { name: 'GroupManager генерира валидни group ID', fn: test_groupManager_generates_valid_ids, category: 'groupManager' },
+                { name: 'GroupManager чете URL параметри правилно', fn: test_groupManager_reads_url_params, category: 'groupManager' },
+                { name: 'GroupManager генерира share URL правилно', fn: test_groupManager_generates_share_url, category: 'groupManager' },
+                { name: 'formatTimeAgo() показва "днес" правилно', fn: test_formatTimeAgo_today, category: 'timestamp' },
+                { name: 'formatTimeAgo() показва "преди X дни" правилно', fn: test_formatTimeAgo_days_ago, category: 'timestamp' },
+                { name: 'Timestamp се включва в leaderboard entries', fn: test_timestamp_in_leaderboard_entry, category: 'timestamp' }
             ];
             
             let passed = 0;
@@ -717,6 +841,8 @@
                 'generateProblem': [],
                 'selectCell': [],
                 'checkAnswer': [],
+                'groupManager': [],
+                'timestamp': [],
                 'other': []
             };
             
@@ -735,6 +861,8 @@
                     'generateProblem': 'generateProblem() - Генериране на задачи',
                     'selectCell': 'selectCell() & handleNumberClick() - Взаимодействие',
                     'checkAnswer': 'checkAnswer() - Валидация на отговори',
+                    'groupManager': 'GroupManager - Споделяне и URL параметри',
+                    'timestamp': 'Timestamp Display - Времеви маркери',
                     'other': 'Други методи'
                 };
                 

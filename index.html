@@ -30,6 +30,14 @@
             <h1>🎯 Игра за делители</h1>
             <p class="subtitle">Избери най-големия делител: 3, 6 или 9</p>
             <div class="input-group">
+                <label for="groupId">Група (или остави празно):</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="groupId" placeholder="напр: alpha-beta-42" maxlength="30" style="flex: 1;">
+                    <button id="shareGroupBtn" class="config-btn" style="padding: 8px 16px; white-space: nowrap;">🔗 Сподели</button>
+                </div>
+                <small style="color: #666; font-size: 0.85em; margin-top: 5px; display: block;">💡 Ако е празно, ще се създаде автоматично. Сподели кода с другите!</small>
+            </div>
+            <div class="input-group">
                 <label for="playerName">Твоето име:</label>
                 <input type="text" id="playerName" placeholder="Въведи име" maxlength="20">
             </div>
@@ -151,6 +159,14 @@
         <div class="container">
             <h1>🔢 Събиране и изваждане</h1>
             <p class="subtitle">Пресмятай числата правилно</p>
+            <div class="input-group">
+                <label for="groupIdSubtraction">Група (или остави празно):</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="groupIdSubtraction" placeholder="напр: alpha-beta-42" maxlength="30" style="flex: 1;">
+                    <button id="shareGroupBtnSubtraction" class="config-btn" style="padding: 8px 16px; white-space: nowrap;">🔗 Сподели</button>
+                </div>
+                <small style="color: #666; font-size: 0.85em; margin-top: 5px; display: block;">💡 Ако е празно, ще се създаде автоматично. Сподели кода с другите!</small>
+            </div>
             <div class="input-group">
                 <label for="playerNameSubtraction">Твоето име:</label>
                 <input type="text" id="playerNameSubtraction" placeholder="Въведи име" maxlength="20">
@@ -334,6 +350,17 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Configuration (optional - falls back to localStorage if missing) -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- Firebase Service -->
+    <script src="firebase-service.js"></script>
+    
+    <!-- Main App -->
     <script src="app.js"></script>
 </body>
 </html>
