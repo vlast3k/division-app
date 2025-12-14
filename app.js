@@ -700,92 +700,110 @@ class SubtractionGame {
                 // Build digit by digit ensuring at least one carry
                 const digits1 = [];
                 const digits2 = [];
-                let hasCarry = false;
                 
-                for (let i = 0; i < this.numDigits; i++) {
-                    if (i === 0 && !hasCarry) {
-                        // Force a carry in first position
-                        const d1 = Math.floor(Math.random() * 5) + 5; // 5-9
-                        const d2 = Math.floor(Math.random() * (10 - d1)) + (10 - d1); // ensure d1+d2 >= 10
-                        digits1.push(d1);
-                        digits2.push(Math.min(d2, 9));
-                        hasCarry = true;
-                    } else {
-                        const d1 = Math.floor(Math.random() * 10);
-                        const d2 = Math.floor(Math.random() * 10);
-                        digits1.push(d1);
-                        digits2.push(d2);
-                    }
+                // Start with leftmost digit (non-zero)
+                digits1.push(Math.floor(Math.random() * 9) + 1); // 1-9
+                digits2.push(Math.floor(Math.random() * 9) + 1); // 1-9
+                
+                // Middle digits (if any)
+                for (let i = 1; i < this.numDigits - 1; i++) {
+                    digits1.push(Math.floor(Math.random() * 10));
+                    digits2.push(Math.floor(Math.random() * 10));
                 }
                 
-                num1 = parseInt(digits1.reverse().join(''));
-                num2 = parseInt(digits2.reverse().join(''));
+                // Force carry in rightmost position (ones)
+                const d1 = Math.floor(Math.random() * 5) + 5; // 5-9
+                const d2 = Math.floor(Math.random() * 5) + 5; // 5-9 (ensures d1+d2 >= 10)
+                digits1.push(d1);
+                digits2.push(d2);
                 
-                // Ensure result doesn't overflow
+                num1 = parseInt(digits1.join(''));
+                num2 = parseInt(digits2.join(''));
+                
+                // Ensure result doesn't overflow (rare edge case)
                 if (num1 + num2 > max) {
-                    num2 = Math.floor(max - num1);
+                    // Reduce last digit of num2
+                    digits2[digits2.length - 1] = 5;
+                    num2 = parseInt(digits2.join(''));
                 }
             } else {
                 // No carrying - each position sum < 10
                 const digits1 = [];
                 const digits2 = [];
-                for (let i = 0; i < this.numDigits; i++) {
+                
+                // First digit (non-zero)
+                const d1First = Math.floor(Math.random() * 9) + 1;
+                const d2First = Math.floor(Math.random() * Math.min(9, 10 - d1First)) + 1;
+                digits1.push(d1First);
+                digits2.push(d2First);
+                
+                // Remaining digits
+                for (let i = 1; i < this.numDigits; i++) {
                     const d1 = Math.floor(Math.random() * 10);
                     const d2 = Math.floor(Math.random() * (10 - d1));
                     digits1.push(d1);
                     digits2.push(d2);
                 }
-                num1 = parseInt(digits1.reverse().join(''));
-                num2 = parseInt(digits2.reverse().join(''));
+                
+                num1 = parseInt(digits1.join(''));
+                num2 = parseInt(digits2.join(''));
             }
             return { operation: 'addition', num1, num2 };
         } else {
             // Subtraction
             if (withCarry) {
                 // Generate numbers that require borrowing
-                // Build digit by digit ensuring at least one borrow
                 const digits1 = [];
                 const digits2 = [];
-                let hasBorrow = false;
                 
-                for (let i = 0; i < this.numDigits; i++) {
-                    if (i === 0 && !hasBorrow) {
-                        // Force a borrow in first position
-                        const d1 = Math.floor(Math.random() * 5); // 0-4
-                        const d2 = Math.floor(Math.random() * (10 - d1 - 1)) + d1 + 1; // d2 > d1
-                        digits1.push(d1);
-                        digits2.push(d2);
-                        hasBorrow = true;
-                    } else {
-                        const d1 = Math.floor(Math.random() * 10);
-                        const d2 = Math.floor(Math.random() * 10);
-                        digits1.push(d1);
-                        digits2.push(d2);
-                    }
+                // First digit: num1 must be >= num2 overall, so start with higher or equal
+                const d1First = Math.floor(Math.random() * 9) + 1; // 1-9
+                const d2First = Math.floor(Math.random() * d1First) + 1; // 1 to d1First
+                digits1.push(d1First);
+                digits2.push(d2First);
+                
+                // Middle digits (if any) - can be anything
+                for (let i = 1; i < this.numDigits - 1; i++) {
+                    digits1.push(Math.floor(Math.random() * 10));
+                    digits2.push(Math.floor(Math.random() * 10));
                 }
                 
-                num1 = parseInt(digits1.reverse().join(''));
-                num2 = parseInt(digits2.reverse().join(''));
+                // Force borrow in rightmost position (ones): d1 < d2
+                const d1Last = Math.floor(Math.random() * 5); // 0-4
+                const d2Last = Math.floor(Math.random() * (10 - d1Last - 1)) + d1Last + 1; // d1+1 to 9
+                digits1.push(d1Last);
+                digits2.push(d2Last);
                 
-                // Ensure num1 > num2 and both in range
-                if (num1 <= num2 || num1 < min) {
-                    num1 = Math.floor(Math.random() * (max - min + 1)) + min;
-                    num2 = Math.floor(Math.random() * (num1 - min)) + min;
+                num1 = parseInt(digits1.join(''));
+                num2 = parseInt(digits2.join(''));
+                
+                // Ensure num1 > num2 (should be guaranteed by construction)
+                if (num1 <= num2) {
+                    // Increase first digit of num1
+                    digits1[0] = digits2[0] + 1;
+                    num1 = parseInt(digits1.join(''));
                 }
             } else {
                 // No borrowing - each position of num1 >= num2
                 const digits1 = [];
                 const digits2 = [];
-                for (let i = 0; i < this.numDigits; i++) {
+                
+                // First digit (non-zero, num1 >= num2)
+                const d1First = Math.floor(Math.random() * 9) + 1;
+                const d2First = Math.floor(Math.random() * (d1First + 1));
+                digits1.push(d1First);
+                digits2.push(d2First);
+                
+                // Remaining digits
+                for (let i = 1; i < this.numDigits; i++) {
                     const d1 = Math.floor(Math.random() * 10);
                     const d2 = Math.floor(Math.random() * (d1 + 1));
                     digits1.push(d1);
                     digits2.push(d2);
                 }
-                num1 = parseInt(digits1.reverse().join(''));
-                num2 = parseInt(digits2.reverse().join(''));
-                // Ensure num1 >= min
-                if (num1 < min) num1 = min;
+                
+                num1 = parseInt(digits1.join(''));
+                num2 = parseInt(digits2.join(''));
             }
             return { operation: 'subtraction', num1, num2 };
         }
