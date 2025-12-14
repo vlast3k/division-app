@@ -7,8 +7,25 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Start Screen -->
-    <div id="startScreen" class="screen">
+    <!-- Game Selection Screen -->
+    <div id="gameSelectionScreen" class="screen">
+        <div class="container">
+            <h1>🎮 Избери игра</h1>
+            <div class="game-selection">
+                <button class="game-select-btn" id="selectDivisionGame">
+                    <span class="game-title">Делители 3, 6, 9</span>
+                    <span class="game-desc">Намери най-големия делител</span>
+                </button>
+                <button class="game-select-btn" id="selectSubtractionGame">
+                    <span class="game-title">Събиране и изваждане</span>
+                    <span class="game-desc">Пресмятай числата правилно</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Division Game Setup Screen -->
+    <div id="divisionSetupScreen" class="screen hidden">
         <div class="container">
             <h1>🎯 Игра за делители</h1>
             <p class="subtitle">Избери най-големия делител: 3, 6 или 9</p>
@@ -16,33 +33,59 @@
                 <label for="playerName">Твоето име:</label>
                 <input type="text" id="playerName" placeholder="Въведи име" maxlength="20">
             </div>
-            <button id="startBtn" class="big-btn">Започни играта!</button>
+            
+            <div class="config-group">
+                <label>Брой задачи:</label>
+                <div class="config-buttons">
+                    <button class="config-btn division-questions-btn" data-questions="10">10</button>
+                    <button class="config-btn division-questions-btn" data-questions="20">20</button>
+                </div>
+            </div>
+            
+            <div class="difficulty-group">
+                <label>Сложност:</label>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn" data-difficulty="easy">
+                        <span class="diff-name">ЛЕСНО</span>
+                        <span class="diff-time">15 сек</span>
+                    </button>
+                    <button class="difficulty-btn" data-difficulty="medium">
+                        <span class="diff-name">СРЕДНО</span>
+                        <span class="diff-time">10 сек</span>
+                    </button>
+                    <button class="difficulty-btn" data-difficulty="hard">
+                        <span class="diff-name">ТРУДНО</span>
+                        <span class="diff-time">6 сек</span>
+                    </button>
+                </div>
+            </div>
+            <button id="startDivisionBtn" class="big-btn">Започни играта!</button>
+            <button class="back-btn">← Назад</button>
             <div class="rules">
                 <h3>📜 Правила:</h3>
                 <ul>
-                    <li>20 задачи за решаване</li>
-                    <li>Избери най-големия делител: 3, 6, 9 или "Друго"</li>
+                    <li>Избери брой задачи (10 или 20)</li>
+                    <li>Избери <strong>най-големия</strong> делител: 3, 6, 9 или "Друго"</li>
                     <li>Всяка задача: макс 10 точки</li>
-                    <li>0-4 сек: пълни 10т | 4-8 сек: 10т→5т | 8+ сек: 5т</li>
-                    <li>Максимален резултат: 200 точки!</li>
+                    <li>Колкото по-бързо отговориш, толкова повече точки!</li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <!-- Game Screen -->
-    <div id="gameScreen" class="screen hidden">
+    <!-- Division Game Screen -->
+    <div id="divisionGameScreen" class="screen hidden">
         <div class="game-container">
             <div class="question-card">
                 <div class="header-progress">
                     <div class="progress-section">
-                        <div class="progress-label">Задачи: <span id="questionNum">1</span>/20</div>
+                        <div class="progress-label">Задачи: <span id="questionNum">1</span>/<span id="divTotalQuestions">20</span></div>
                         <div class="progress-bar-wrapper">
                             <div class="progress-bar tasks-bar" id="tasksBar"></div>
                         </div>
                     </div>
                     <div class="progress-section">
-                        <div class="progress-label">Точки: <span id="currentScore">0</span>/200</div>
+                        <div class="progress-label">Точки: <span id="currentScore">0</span>/<span id="divMaxScore">200</span></div>
                         <div class="progress-bar-wrapper">
                             <div class="progress-bar points-possible-bar" id="pointsPossibleBar"></div>
                             <div class="progress-bar points-earned-bar" id="pointsEarnedBar"></div>
@@ -62,7 +105,7 @@
                 <div class="timer-display">Общо време: <span id="gameTime">0:00</span></div>
                 
                 <div class="number-display" id="numberDisplay">?</div>
-                <p class="question-text">Избери най-големия делител:</p>
+                <p class="question-text">Избери <strong>най-големия</strong> делител:</p>
                 <div class="answer-buttons">
                     <button class="answer-btn" data-answer="3">3</button>
                     <button class="answer-btn" data-answer="6">6</button>
@@ -74,8 +117,8 @@
         </div>
     </div>
 
-    <!-- Results Screen -->
-    <div id="resultsScreen" class="screen hidden">
+    <!-- Division Results Screen -->
+    <div id="divisionResultsScreen" class="screen hidden">
         <div class="container">
             <h1>🎉 Браво!</h1>
             <div class="final-results">
@@ -94,11 +137,200 @@
             </div>
             
             <div class="leaderboard">
-                <h2>🏆 Класация</h2>
+                <h2>🏆 Класация - <span id="leaderboardDifficulty"></span></h2>
                 <div id="leaderboardList"></div>
             </div>
             
-            <button id="playAgainBtn" class="big-btn">Играй отново!</button>
+            <button id="divisionPlayAgainBtn" class="big-btn">Играй отново!</button>
+            <button class="back-btn">← Назад към игри</button>
+        </div>
+    </div>
+
+    <!-- Subtraction Game Setup Screen -->
+    <div id="subtractionSetupScreen" class="screen hidden">
+        <div class="container">
+            <h1>🔢 Събиране и изваждане</h1>
+            <p class="subtitle">Пресмятай числата правилно</p>
+            <div class="input-group">
+                <label for="playerNameSubtraction">Твоето име:</label>
+                <input type="text" id="playerNameSubtraction" placeholder="Въведи име" maxlength="20">
+            </div>
+            
+            <div class="config-group">
+                <label>Брой цифри:</label>
+                <div class="config-buttons">
+                    <button class="config-btn digits-btn" data-digits="2">2</button>
+                    <button class="config-btn digits-btn" data-digits="3">3</button>
+                    <button class="config-btn digits-btn" data-digits="4">4</button>
+                    <button class="config-btn digits-btn" data-digits="5">5</button>
+                </div>
+            </div>
+            
+            <div class="config-group">
+                <label>Брой задачи:</label>
+                <div class="config-buttons">
+                    <button class="config-btn questions-btn" data-questions="10">10</button>
+                    <button class="config-btn questions-btn" data-questions="20">20</button>
+                    <button class="config-btn questions-btn" data-questions="30">30</button>
+                    <button class="config-btn questions-btn" data-questions="50">50</button>
+                </div>
+            </div>
+            
+            <div class="config-group">
+                <label>Операции:</label>
+                <div class="config-buttons">
+                    <button class="config-btn operation-btn" data-operation="addition">➕ Събиране</button>
+                    <button class="config-btn operation-btn" data-operation="subtraction">➖ Изваждане</button>
+                </div>
+            </div>
+            
+            <div class="difficulty-group">
+                <label>Сложност:</label>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn" data-difficulty="easy">
+                        <span class="diff-name">ЛЕСНО</span>
+                        <span class="diff-time" id="easyTimeLabel">18 сек</span>
+                    </button>
+                    <button class="difficulty-btn" data-difficulty="medium">
+                        <span class="diff-name">СРЕДНО</span>
+                        <span class="diff-time" id="mediumTimeLabel">12 сек</span>
+                    </button>
+                    <button class="difficulty-btn" data-difficulty="hard">
+                        <span class="diff-name">ТРУДНО</span>
+                        <span class="diff-time" id="hardTimeLabel">6 сек</span>
+                    </button>
+                </div>
+            </div>
+            <button id="startSubtractionBtn" class="big-btn">Започни играта!</button>
+            <button class="back-btn">← Назад</button>
+            <div class="rules">
+                <h3>📜 Правила:</h3>
+                <ul>
+                    <li>Избери брой задачи (10-50)</li>
+                    <li>Избери правилните цифри за всяка позиция</li>
+                    <li>Отбележи дали има пренасяне/заем</li>
+                    <li>Всяка задача: макс 10 точки</li>
+                    <li>Колкото по-бързо отговориш, толкова повече точки!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subtraction Game Screen -->
+    <div id="subtractionGameScreen" class="screen hidden">
+        <div class="game-container">
+            <div class="question-card">
+                <div class="header-progress">
+                    <div class="progress-section">
+                        <div class="progress-label">Задачи: <span id="subQuestionNum">1</span>/<span id="subTotalQuestions">20</span></div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar tasks-bar" id="subTasksBar"></div>
+                        </div>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-label">Точки: <span id="subCurrentScore">0</span>/<span id="subMaxScore">200</span></div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar points-possible-bar" id="subPointsPossibleBar"></div>
+                            <div class="progress-bar points-earned-bar" id="subPointsEarnedBar"></div>
+                        </div>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-label-inline">
+                            <span>Време за задача:</span>
+                            <span class="question-points-label" id="subQuestionPointsLabel">10т</span>
+                        </div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar question-progress-bar" id="subQuestionProgressBar"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timer-display">Общо време: <span id="subGameTime">0:00</span></div>
+                
+                <!-- Vertical Subtraction Display -->
+                <div class="subtraction-problem">
+                    <div class="sub-row carry-row">
+                        <div class="sub-cell empty"></div>
+                        <div class="sub-cell">
+                            <button class="carry-toggle" id="carryToggle"></button>
+                        </div>
+                        <div class="sub-cell empty"></div>
+                    </div>
+                    <div class="sub-row">
+                        <div class="sub-cell empty"></div>
+                        <div class="sub-cell digit" id="num1Tens">5</div>
+                        <div class="sub-cell digit" id="num1Ones">5</div>
+                    </div>
+                    <div class="sub-row operator-row">
+                        <div class="sub-cell operator">−</div>
+                        <div class="sub-cell empty"></div>
+                        <div class="sub-cell empty"></div>
+                    </div>
+                    <div class="sub-row">
+                        <div class="sub-cell empty"></div>
+                        <div class="sub-cell digit" id="num2Tens">3</div>
+                        <div class="sub-cell digit" id="num2Ones">7</div>
+                    </div>
+                    <div class="sub-row divider-row">
+                        <div class="sub-cell"></div>
+                        <div class="sub-cell"></div>
+                        <div class="sub-cell"></div>
+                    </div>
+                    <div class="sub-row answer-row">
+                        <div class="sub-cell empty"></div>
+                        <div class="sub-cell answer-cell" id="answerTens" data-position="tens">
+                        </div>
+                        <div class="sub-cell answer-cell" id="answerOnes" data-position="ones">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Number Pad -->
+                <div class="number-pad">
+                    <button class="num-btn" data-num="0">0</button>
+                    <button class="num-btn" data-num="1">1</button>
+                    <button class="num-btn" data-num="2">2</button>
+                    <button class="num-btn" data-num="3">3</button>
+                    <button class="num-btn" data-num="4">4</button>
+                    <button class="num-btn" data-num="5">5</button>
+                    <button class="num-btn" data-num="6">6</button>
+                    <button class="num-btn" data-num="7">7</button>
+                    <button class="num-btn" data-num="8">8</button>
+                    <button class="num-btn" data-num="9">9</button>
+                </div>
+                
+                <button id="subContinueBtn" class="big-btn">Продължи</button>
+            </div>
+            <div class="feedback hidden" id="subFeedback"></div>
+        </div>
+    </div>
+
+    <!-- Subtraction Results Screen -->
+    <div id="subtractionResultsScreen" class="screen hidden">
+        <div class="container">
+            <h1>🎉 Браво!</h1>
+            <div class="final-results">
+                <div class="stat-box">
+                    <div class="stat-label">Финални точки</div>
+                    <div class="stat-value" id="subFinalScore">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Време</div>
+                    <div class="stat-value" id="subFinalTime">0:00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Точки/минута</div>
+                    <div class="stat-value" id="subScorePerMinute">0</div>
+                </div>
+            </div>
+            
+            <div class="leaderboard">
+                <h2>🏆 Класация - <span id="subLeaderboardDifficulty"></span></h2>
+                <div id="subLeaderboardList"></div>
+            </div>
+            
+            <button id="subtractionPlayAgainBtn" class="big-btn">Играй отново!</button>
+            <button class="back-btn">← Назад към игри</button>
         </div>
     </div>
 
