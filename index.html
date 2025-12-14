@@ -3,30 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Division App</title>
+    <title>Игра за делители 🎮</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>🧮 Division Calculator</h1>
-        <div class="calculator">
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen">
+        <div class="container">
+            <h1>🎯 Игра за делители</h1>
+            <p class="subtitle">Избери най-големия делител: 3, 6 или 9</p>
             <div class="input-group">
-                <label for="dividend">Dividend:</label>
-                <input type="number" id="dividend" placeholder="Enter number">
+                <label for="playerName">Твоето име:</label>
+                <input type="text" id="playerName" placeholder="Въведи име" maxlength="20">
             </div>
-            <div class="input-group">
-                <label for="divisor">Divisor:</label>
-                <input type="number" id="divisor" placeholder="Enter number">
+            <button id="startBtn" class="big-btn">Започни играта!</button>
+            <div class="rules">
+                <h3>📜 Правила:</h3>
+                <ul>
+                    <li>20 задачи за решаване</li>
+                    <li>Избери най-големия делител: 3, 6, 9 или "Друго"</li>
+                    <li>Всяка задача: макс 10 точки</li>
+                    <li>0-4 сек: пълни 10т | 4-8 сек: 10т→5т | 8+ сек: 5т</li>
+                    <li>Максимален резултат: 200 точки!</li>
+                </ul>
             </div>
-            <button id="calculateBtn">Calculate</button>
-            <div id="result" class="result"></div>
-        </div>
-        <div class="history">
-            <h2>History</h2>
-            <button id="clearHistory">Clear History</button>
-            <ul id="historyList"></ul>
         </div>
     </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen hidden">
+        <div class="game-container">
+            <div class="question-card">
+                <div class="header-progress">
+                    <div class="progress-section">
+                        <div class="progress-label">Задачи: <span id="questionNum">1</span>/20</div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar tasks-bar" id="tasksBar"></div>
+                        </div>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-label">Точки: <span id="currentScore">0</span>/200</div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar points-possible-bar" id="pointsPossibleBar"></div>
+                            <div class="progress-bar points-earned-bar" id="pointsEarnedBar"></div>
+                        </div>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-label-inline">
+                            <span>Време за задача:</span>
+                            <span class="question-points-label">10т</span>
+                        </div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar question-progress-bar"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timer-display">Общо време: <span id="gameTime">0:00</span></div>
+                
+                <div class="number-display" id="numberDisplay">?</div>
+                <p class="question-text">Избери най-големия делител:</p>
+                <div class="answer-buttons">
+                    <button class="answer-btn" data-answer="3">3</button>
+                    <button class="answer-btn" data-answer="6">6</button>
+                    <button class="answer-btn" data-answer="9">9</button>
+                    <button class="answer-btn other-btn" data-answer="other">Друго</button>
+                </div>
+            </div>
+            <div class="feedback hidden" id="feedback"></div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="screen hidden">
+        <div class="container">
+            <h1>🎉 Браво!</h1>
+            <div class="final-results">
+                <div class="stat-box">
+                    <div class="stat-label">Финални точки</div>
+                    <div class="stat-value" id="finalScore">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Време</div>
+                    <div class="stat-value" id="finalTime">0:00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Точки/минута</div>
+                    <div class="stat-value" id="scorePerMinute">0</div>
+                </div>
+            </div>
+            
+            <div class="leaderboard">
+                <h2>🏆 Класация</h2>
+                <div id="leaderboardList"></div>
+            </div>
+            
+            <button id="playAgainBtn" class="big-btn">Играй отново!</button>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
