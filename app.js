@@ -496,7 +496,8 @@ class SubtractionGame {
             medium: { baseTime: 12, extraTimePerDigit: 4, name: 'Средно' },
             hard: { baseTime: 6, extraTimePerDigit: 2, name: 'Трудно' }
         };
-        this.selectedCell = 'ones'; // Start with ones selected
+        this.selectedCell = 0; // Start with rightmost digit (index 0 = ones)
+        this.carryStates = []; // Will be initialized based on numDigits
         
         this.initElements();
         this.attachEventListeners();
@@ -529,16 +530,11 @@ class SubtractionGame {
         this.maxScoreEl = document.getElementById('subMaxScore');
         this.currentScoreEl = document.getElementById('subCurrentScore');
         this.gameTimeEl = document.getElementById('subGameTime');
-        this.num1TensEl = document.getElementById('num1Tens');
-        this.num1OnesEl = document.getElementById('num1Ones');
-        this.num2TensEl = document.getElementById('num2Tens');
-        this.num2OnesEl = document.getElementById('num2Ones');
-        this.answerTensEl = document.getElementById('answerTens');
-        this.answerOnesEl = document.getElementById('answerOnes');
-        this.carryToggleEl = document.getElementById('carryToggle');
         this.continueBtn = document.getElementById('subContinueBtn');
         this.numBtns = document.querySelectorAll('.num-btn');
         this.feedbackEl = document.getElementById('subFeedback');
+        // Note: digit elements (num1Digit*, num2Digit*, answerDigit*) and carry toggles 
+        // are created dynamically in buildProblemUI()
         
         // Results screen
         this.finalScoreEl = document.getElementById('subFinalScore');
@@ -605,17 +601,12 @@ class SubtractionGame {
             });
         });
         
-        // Answer cell selection
-        this.answerTensEl.addEventListener('click', () => this.selectCell('tens'));
-        this.answerOnesEl.addEventListener('click', () => this.selectCell('ones'));
-        
         // Number buttons
         this.numBtns.forEach(btn => {
             btn.addEventListener('click', () => this.handleNumberClick(btn.dataset.num));
         });
         
-        // Carry toggle
-        this.carryToggleEl.addEventListener('click', () => this.toggleCarry());
+        // Note: Answer cells and carry toggles are set up dynamically in buildProblemUI()
         
         // Continue button
         this.continueBtn.addEventListener('click', () => this.checkAnswer());
@@ -849,6 +840,9 @@ class SubtractionGame {
         
         this.setupBackButtonHandler();
         
+        // Build UI based on number of digits
+        this.buildProblemUI();
+        
         this.startTime = Date.now();
         this.timerInterval = setInterval(() => this.updateTimer(), 100);
         
@@ -885,6 +879,77 @@ class SubtractionGame {
         this.setupScreen.classList.remove('hidden');
     }
 
+    buildProblemUI() {
+        const problemContainer = document.querySelector('.subtraction-problem');
+        const numCols = this.numDigits + 1; // +1 for operator/empty column
+        
+        // Build carry row
+        let carryRow = '<div class="sub-row carry-row">';
+        carryRow += '<div class="sub-cell empty"></div>'; // operator column
+        for (let i = 0; i < this.numDigits - 1; i++) {
+            carryRow += `<div class="sub-cell"><button class="carry-toggle" id="carry${i}" data-position="${i}"></button></div>`;
+        }
+        carryRow += '<div class="sub-cell empty"></div>'; // ones column (no carry above)
+        carryRow += '</div>';
+        
+        // Build num1 row
+        let num1Row = '<div class="sub-row">';
+        num1Row += '<div class="sub-cell empty"></div>'; // operator column
+        for (let i = 0; i < this.numDigits; i++) {
+            num1Row += `<div class="sub-cell digit" id="num1Digit${i}"></div>`;
+        }
+        num1Row += '</div>';
+        
+        // Build operator row
+        let opRow = '<div class="sub-row operator-row">';
+        opRow += '<div class="sub-cell operator">−</div>';
+        for (let i = 0; i < this.numDigits; i++) {
+            opRow += '<div class="sub-cell empty"></div>';
+        }
+        opRow += '</div>';
+        
+        // Build num2 row
+        let num2Row = '<div class="sub-row">';
+        num2Row += '<div class="sub-cell empty"></div>'; // operator column
+        for (let i = 0; i < this.numDigits; i++) {
+            num2Row += `<div class="sub-cell digit" id="num2Digit${i}"></div>`;
+        }
+        num2Row += '</div>';
+        
+        // Build divider row
+        let dividerRow = '<div class="sub-row divider-row">';
+        for (let i = 0; i <= this.numDigits; i++) {
+            dividerRow += '<div class="sub-cell"></div>';
+        }
+        dividerRow += '</div>';
+        
+        // Build answer row
+        let answerRow = '<div class="sub-row answer-row">';
+        answerRow += '<div class="sub-cell empty"></div>'; // operator column
+        for (let i = 0; i < this.numDigits; i++) {
+            answerRow += `<div class="sub-cell answer-cell" id="answerDigit${i}" data-position="${i}"></div>`;
+        }
+        answerRow += '</div>';
+        
+        problemContainer.innerHTML = carryRow + num1Row + opRow + num2Row + dividerRow + answerRow;
+        
+        // Re-attach event listeners for carry toggles
+        for (let i = 0; i < this.numDigits - 1; i++) {
+            const carryBtn = document.getElementById(`carry${i}`);
+            if (carryBtn) {
+                carryBtn.addEventListener('click', () => this.toggleCarry(i));
+            }
+        }
+        
+        // Re-attach event listeners for answer cells
+        for (let i = 0; i < this.numDigits; i++) {
+            const answerCell = document.getElementById(`answerDigit${i}`);
+            if (answerCell) {
+                answerCell.addEventListener('click', () => this.selectCell(i));
+            }
+        }
+    }
+
     showQuestion() {
         this.currentQuestion++;
         this.questionNumEl.textContent = this.currentQuestion;
@@ -896,30 +961,38 @@ class SubtractionGame {
         const num1Str = questionData.num1.toString().padStart(this.numDigits, '0');
         const num2Str = questionData.num2.toString().padStart(this.numDigits, '0');
         
-        // For now, we only display up to tens and ones (2 digits)
-        // TODO: Extend UI to support more digits
-        const displayDigits = Math.min(this.numDigits, 2);
-        this.num1TensEl.textContent = num1Str[num1Str.length - 2];
-        this.num1OnesEl.textContent = num1Str[num1Str.length - 1];
-        this.num2TensEl.textContent = num2Str[num2Str.length - 2];
-        this.num2OnesEl.textContent = num2Str[num2Str.length - 1];
+        // Update all digit displays
+        for (let i = 0; i < this.numDigits; i++) {
+            const digit1El = document.getElementById(`num1Digit${i}`);
+            const digit2El = document.getElementById(`num2Digit${i}`);
+            if (digit1El) digit1El.textContent = num1Str[i];
+            if (digit2El) digit2El.textContent = num2Str[i];
+        }
         
         // Update operator display
         const operatorEl = document.querySelector('.operator');
         operatorEl.textContent = questionData.operation === 'addition' ? '+' : '−';
         
         // Reset answer fields
-        this.answerTensEl.innerHTML = '';
-        this.answerOnesEl.innerHTML = '';
-        this.answerTensEl.dataset.value = '';
-        this.answerOnesEl.dataset.value = '';
+        for (let i = 0; i < this.numDigits; i++) {
+            const answerCell = document.getElementById(`answerDigit${i}`);
+            if (answerCell) {
+                answerCell.innerHTML = '';
+                answerCell.dataset.value = '';
+            }
+        }
         
-        // Reset carry
-        this.carryToggleEl.classList.remove('active');
-        this.carryChecked = false;
+        // Reset all carry toggles
+        this.carryStates = new Array(this.numDigits - 1).fill(false);
+        for (let i = 0; i < this.numDigits - 1; i++) {
+            const carryBtn = document.getElementById(`carry${i}`);
+            if (carryBtn) {
+                carryBtn.classList.remove('active');
+            }
+        }
         
-        // Select ones by default
-        this.selectCell('ones');
+        // Select rightmost digit (ones) by default
+        this.selectCell(this.numDigits - 1);
         
         // Update progress
         const tasksProgress = (this.currentQuestion / this.totalQuestions) * 100;
@@ -931,33 +1004,40 @@ class SubtractionGame {
     
     selectCell(position) {
         this.selectedCell = position;
-        this.answerTensEl.classList.remove('selected');
-        this.answerOnesEl.classList.remove('selected');
         
-        if (position === 'tens') {
-            this.answerTensEl.classList.add('selected');
-        } else {
-            this.answerOnesEl.classList.add('selected');
+        // Remove selected class from all cells
+        for (let i = 0; i < this.numDigits; i++) {
+            const cell = document.getElementById(`answerDigit${i}`);
+            if (cell) cell.classList.remove('selected');
         }
+        
+        // Add selected class to chosen cell
+        const selectedCell = document.getElementById(`answerDigit${position}`);
+        if (selectedCell) selectedCell.classList.add('selected');
     }
     
     handleNumberClick(num) {
-        const cell = this.selectedCell === 'tens' ? this.answerTensEl : this.answerOnesEl;
+        const cell = document.getElementById(`answerDigit${this.selectedCell}`);
+        if (!cell) return;
+        
         cell.innerHTML = `<span class="answer-value">${num}</span>`;
         cell.dataset.value = num;
         
-        // Auto-switch to tens after ones is filled
-        if (this.selectedCell === 'ones') {
-            this.selectCell('tens');
+        // Auto-switch to next digit to the left (if not already at leftmost)
+        if (this.selectedCell > 0) {
+            this.selectCell(this.selectedCell - 1);
         }
     }
     
-    toggleCarry() {
-        this.carryChecked = !this.carryChecked;
-        if (this.carryChecked) {
-            this.carryToggleEl.classList.add('active');
-        } else {
-            this.carryToggleEl.classList.remove('active');
+    toggleCarry(position) {
+        this.carryStates[position] = !this.carryStates[position];
+        const carryBtn = document.getElementById(`carry${position}`);
+        if (carryBtn) {
+            if (this.carryStates[position]) {
+                carryBtn.classList.add('active');
+            } else {
+                carryBtn.classList.remove('active');
+            }
         }
     }
     
@@ -1034,40 +1114,79 @@ class SubtractionGame {
         
         const questionData = this.questions[this.currentQuestion - 1];
         const elapsed = (Date.now() - this.questionStartTime) / 1000;
+        const { operation, num1, num2 } = questionData;
         
-        // Get user answer
-        const userTens = this.answerTensEl.dataset.value;
-        const userOnes = this.answerOnesEl.dataset.value;
-        
-        // Calculate correct answer based on operation
-        let correctResult;
-        let needsCarry;
-        
-        if (questionData.operation === 'addition') {
-            correctResult = questionData.num1 + questionData.num2;
-            // Check if carrying is needed
-            const num1Ones = questionData.num1 % 10;
-            const num2Ones = questionData.num2 % 10;
-            needsCarry = (num1Ones + num2Ones) >= 10;
-        } else {
-            correctResult = questionData.num1 - questionData.num2;
-            // Check if borrowing is needed
-            const num1Ones = questionData.num1 % 10;
-            const num2Ones = questionData.num2 % 10;
-            needsCarry = num1Ones < num2Ones;
+        // Get user answers for all digits
+        const userDigits = [];
+        for (let i = 0; i < this.numDigits; i++) {
+            const cell = document.getElementById(`answerDigit${i}`);
+            userDigits.push(cell ? cell.dataset.value : '');
         }
         
-        const correctTens = Math.floor(correctResult / 10);
-        const correctOnes = correctResult % 10;
+        // Calculate correct answer
+        const correctResult = operation === 'addition' ? num1 + num2 : num1 - num2;
+        const correctStr = correctResult.toString().padStart(this.numDigits, '0');
         
-        // Check if answer is correct
-        // Allow empty tens if result is single digit (correctTens === 0)
-        const tensCorrect = correctTens === 0 ? 
-            (userTens === '' || userTens === '0') : 
-            (userTens === String(correctTens));
-        const onesCorrect = userOnes === String(correctOnes);
-        const carryCorrect = this.carryChecked === needsCarry;
-        const isCorrect = tensCorrect && onesCorrect && carryCorrect;
+        // Determine which positions need carry/borrow
+        const needsCarry = new Array(this.numDigits - 1).fill(false);
+        const num1Str = num1.toString().padStart(this.numDigits, '0');
+        const num2Str = num2.toString().padStart(this.numDigits, '0');
+        
+        if (operation === 'addition') {
+            let carry = 0;
+            for (let i = this.numDigits - 1; i > 0; i--) {
+                const d1 = parseInt(num1Str[i]);
+                const d2 = parseInt(num2Str[i]);
+                const sum = d1 + d2 + carry;
+                carry = sum >= 10 ? 1 : 0;
+                if (carry === 1) {
+                    needsCarry[i - 1] = true;
+                }
+            }
+        } else {
+            let borrow = 0;
+            for (let i = this.numDigits - 1; i > 0; i--) {
+                const d1 = parseInt(num1Str[i]);
+                const d2 = parseInt(num2Str[i]);
+                if (d1 - borrow < d2) {
+                    needsCarry[i - 1] = true;
+                    borrow = 1;
+                } else {
+                    borrow = 0;
+                }
+            }
+        }
+        
+        // Check if all digits are correct
+        let digitsCorrect = true;
+        for (let i = 0; i < this.numDigits; i++) {
+            const correctDigit = correctStr[i];
+            const userDigit = userDigits[i];
+            
+            // For leading zeros, allow empty or '0'
+            if (i < this.numDigits - 1 && correctDigit === '0') {
+                if (userDigit !== '' && userDigit !== '0') {
+                    digitsCorrect = false;
+                    break;
+                }
+            } else {
+                if (userDigit !== correctDigit) {
+                    digitsCorrect = false;
+                    break;
+                }
+            }
+        }
+        
+        // Check if all carry/borrow marks are correct
+        let carryCorrect = true;
+        for (let i = 0; i < this.numDigits - 1; i++) {
+            if (this.carryStates[i] !== needsCarry[i]) {
+                carryCorrect = false;
+                break;
+            }
+        }
+        
+        const isCorrect = digitsCorrect && carryCorrect;
         
         const points = isCorrect ? this.calculatePoints(elapsed) : 0;
         
