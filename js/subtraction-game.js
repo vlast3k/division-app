@@ -335,11 +335,16 @@ class SubtractionGame {
                 num1 = parseInt(digits1.join(''));
                 num2 = parseInt(digits2.join(''));
                 
-                // Ensure num1 > num2 (should be guaranteed by construction)
+                // Гарантирай че num1 > num2 (резултатът трябва да е положителен)
                 if (num1 <= num2) {
-                    // Increase first digit of num1
-                    digits1[0] = digits2[0] + 1;
+                    // Увеличи първата цифра на num1 с поне 1
+                    digits1[0] = Math.min(9, digits2[0] + 1 + Math.floor(Math.random() * (9 - digits2[0])));
                     num1 = parseInt(digits1.join(''));
+                }
+                
+                // Допълнителна проверка - ако все още не е положителен, размени числата
+                if (num1 <= num2) {
+                    [num1, num2] = [num2, num1];
                 }
             } else {
                 // No borrowing - each position of num1 >= num2
