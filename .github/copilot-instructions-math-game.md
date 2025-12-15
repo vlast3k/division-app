@@ -254,6 +254,28 @@ const key = `leaderboard_math_${this.numQuestions}q_${this.numDigits}d_${opsKey}
 - `leaderboard_math_50q_3d_addition_subtraction_hard`
 - `leaderboard_math_10q_2d_addition_easy`
 
+### Структура на данните
+Всеки запис в leaderboard включва:
+```javascript
+{
+  name: string,      // Име на играча
+  time: number,      // Време в секунди
+  timestamp: number  // Date.now() когато е записан резултатът
+}
+```
+
+**Firebase интеграция:**
+- Резултатите се записват в: `groups/{groupId}/leaderboards/{configKey}/scores/`
+- `groupId` се взима от `config.groupId` в `endGame()`
+- `timestamp` се добавя автоматично с `Date.now()` преди запис
+- Използва се `FirebaseService.saveScore()` за запис в облака
+
+**Показване на времеви маркери:**
+- При зареждане на leaderboard се показва времева информация
+- "днес" - за резултати от последните 24 часа
+- "преди X дни" - за по-стари резултати
+- Времето се изчислява с `formatTimeAgo(timestamp)` функцията
+
 ### Показване
 ```
 "20 задачи, 2 цифри, −, Средно"

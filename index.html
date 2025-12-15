@@ -11,6 +11,26 @@
     <div id="gameSelectionScreen" class="screen">
         <div class="container">
             <h1>🎮 Избери игра</h1>
+            
+            <!-- Common player and group settings -->
+            <div class="input-group">
+                <label for="globalGroupId">Група (или остави празно):</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="globalGroupId" placeholder="напр: alpha-beta-42" maxlength="30" style="flex: 1;">
+                    <button id="globalLoadGroupBtn" class="config-btn" style="padding: 8px 16px; white-space: nowrap;">📥 Зареди</button>
+                    <button id="globalShareGroupBtn" class="config-btn" style="padding: 8px 16px; white-space: nowrap;">🔗 Сподели</button>
+                </div>
+                <small style="color: #666; font-size: 0.85em; margin-top: 5px; display: block;">💡 Ако е празно, ще се създаде автоматично. Използвай "Зареди" за списък с играчи.</small>
+            </div>
+            
+            <div class="input-group">
+                <label for="globalPlayerName">Твоето име:</label>
+                <input type="text" id="globalPlayerName" list="playerNamesList" placeholder="Избери или въведи име" maxlength="20" autocomplete="off">
+                <datalist id="playerNamesList">
+                </datalist>
+                <small style="color: #666; font-size: 0.85em; margin-top: 5px; display: block;">💡 Избери от списъка или напиши ново име</small>
+            </div>
+            
             <div class="game-selection">
                 <button class="game-select-btn" id="selectDivisionGame">
                     <span class="game-title">Делители 3, 6, 9</span>
@@ -29,18 +49,6 @@
         <div class="container">
             <h1>🎯 Игра за делители</h1>
             <p class="subtitle">Избери най-големия делител: 3, 6 или 9</p>
-            <div class="input-group">
-                <label for="groupId">Група (или остави празно):</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="groupId" placeholder="напр: alpha-beta-42" maxlength="30" style="flex: 1;">
-                    <button id="shareGroupBtn" class="config-btn" style="padding: 8px 16px; white-space: nowrap;">🔗 Сподели</button>
-                </div>
-                <small style="color: #666; font-size: 0.85em; margin-top: 5px; display: block;">💡 Ако е празно, ще се създаде автоматично. Сподели кода с другите!</small>
-            </div>
-            <div class="input-group">
-                <label for="playerName">Твоето име:</label>
-                <input type="text" id="playerName" placeholder="Въведи име" maxlength="20">
-            </div>
             
             <div class="config-group">
                 <label>Брой задачи:</label>
@@ -68,6 +76,7 @@
                 </div>
             </div>
             <button id="startDivisionBtn" class="big-btn">Започни играта!</button>
+            <button id="viewDivisionLeaderboardBtn" class="big-btn secondary-btn">🏆 Leaderboard</button>
             <button class="back-btn">← Назад</button>
             <div class="rules">
                 <h3>📜 Правила:</h3>
@@ -150,6 +159,7 @@
             </div>
             
             <button id="divisionPlayAgainBtn" class="big-btn">Играй отново!</button>
+            <button id="divisionBackToSetupBtn" class="big-btn secondary-btn">← Назад към настройки</button>
             <button class="back-btn">← Назад към игри</button>
         </div>
     </div>
@@ -159,18 +169,6 @@
         <div class="container">
             <h1>🔢 Събиране и изваждане</h1>
             <p class="subtitle">Пресмятай числата правилно</p>
-            <div class="input-group">
-                <label for="groupIdSubtraction">Група (или остави празно):</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="groupIdSubtraction" placeholder="напр: alpha-beta-42" maxlength="30" style="flex: 1;">
-                    <button id="shareGroupBtnSubtraction" class="config-btn" style="padding: 8px 16px; white-space: nowrap;">🔗 Сподели</button>
-                </div>
-                <small style="color: #666; font-size: 0.85em; margin-top: 5px; display: block;">💡 Ако е празно, ще се създаде автоматично. Сподели кода с другите!</small>
-            </div>
-            <div class="input-group">
-                <label for="playerNameSubtraction">Твоето име:</label>
-                <input type="text" id="playerNameSubtraction" placeholder="Въведи име" maxlength="20">
-            </div>
             
             <div class="config-group">
                 <label>Брой цифри:</label>
@@ -218,6 +216,7 @@
                 </div>
             </div>
             <button id="startSubtractionBtn" class="big-btn">Започни играта!</button>
+            <button id="viewSubtractionLeaderboardBtn" class="big-btn secondary-btn">🏆 Leaderboard</button>
             <button class="back-btn">← Назад</button>
             <div class="rules">
                 <h3>📜 Правила:</h3>
@@ -346,6 +345,7 @@
             </div>
             
             <button id="subtractionPlayAgainBtn" class="big-btn">Играй отново!</button>
+            <button id="subtractionBackToSetupBtn" class="big-btn secondary-btn">← Назад към настройки</button>
             <button class="back-btn">← Назад към игри</button>
         </div>
     </div>
@@ -360,7 +360,13 @@
     <!-- Firebase Service -->
     <script src="firebase-service.js"></script>
     
-    <!-- Main App -->
+    <!-- Game Modules (must be loaded in this order before app.js) -->
+    <script src="js/group-manager.js"></script>
+    <script src="js/game-manager.js"></script>
+    <script src="js/division-game.js"></script>
+    <script src="js/subtraction-game.js"></script>
+    
+    <!-- Main App (initialization only) -->
     <script src="app.js"></script>
 </body>
 </html>

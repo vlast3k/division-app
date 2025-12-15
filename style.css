@@ -152,6 +152,15 @@ input[type="text"]:focus, input[type="number"]:focus {
     transform: translateY(0);
 }
 
+.big-btn.secondary-btn {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    margin-top: 10px;
+}
+
+.big-btn.secondary-btn:hover {
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.5);
+}
+
 .rules {
     margin-top: 30px;
     padding: 20px;
@@ -660,9 +669,11 @@ input[type="text"]:focus, input[type="number"]:focus {
     transform: translate(-50%, -50%);
 }
 
-.divider-row .sub-cell {
-    border-bottom: 3px solid #333;
-    height: 20px;
+.divider-row {
+    height: 3px;
+    background: #333;
+    margin: 5px 0;
+    width: 100%;
 }
 
 .answer-row .sub-cell {

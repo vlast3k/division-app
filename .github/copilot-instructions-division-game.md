@@ -143,9 +143,15 @@ const key = `leaderboard_division_${this.numQuestions}q_${this.difficulty}`;
     score: 185,
     time: 145, // секунди
     scorePerMinute: 76,
-    date: "14.12.2025 г., 14:30:45 ч."
+    date: "14.12.2025 г., 14:30:45 ч.",
+    timestamp: 1734183045000 // Date.now() милисекунди
 }
 ```
+
+### Firebase интеграция
+- **Config обект**: включва `groupId` за multi-tenant групи
+- **Показване в UI**: `Група: alpha-beta-42 | 20 задачи, Средно`
+- **Времеви маркери**: "(днес)", "(преди 1 ден)", "(преди 5 дни)"
 
 ### Сортиране
 - По `score` (низходящо)
