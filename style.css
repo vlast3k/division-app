@@ -107,6 +107,71 @@ h1 {
     margin-bottom: 25px;
 }
 
+.group-input-wrapper {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.group-input-wrapper input {
+    flex: 1;
+    min-width: 200px;
+}
+
+.group-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.group-buttons .config-btn {
+    padding: 8px 16px;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .group-input-wrapper {
+        flex-direction: column;
+    }
+    
+    .group-input-wrapper input {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .group-buttons {
+        width: 100%;
+    }
+    
+    .group-buttons .config-btn {
+        flex: 1;
+    }
+}
+
+.name-input-wrapper {
+    position: relative;
+}
+
+.name-input-wrapper select {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 18px;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.name-input-wrapper select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.name-input-wrapper input {
+    margin-top: 10px;
+}
+
 label {
     display: block;
     margin-bottom: 8px;

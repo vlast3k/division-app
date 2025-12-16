@@ -14,21 +14,26 @@
             
             <!-- Common player and group settings -->
             <div class="input-group">
-                <label for="globalGroupId">Група (или остави празно):</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="globalGroupId" placeholder="напр: alpha-beta-42" maxlength="30" style="flex: 1;">
-                    <button id="globalLoadGroupBtn" class="config-btn" style="padding: 8px 16px; white-space: nowrap;">📥 Зареди</button>
-                    <button id="globalShareGroupBtn" class="config-btn" style="padding: 8px 16px; white-space: nowrap;">🔗 Сподели</button>
+                <label for="globalGroupId">Група:</label>
+                <div class="group-input-wrapper">
+                    <input type="text" id="globalGroupId" placeholder="напр: alpha-beta-42" maxlength="30">
+                    <div class="group-buttons">
+                        <button id="globalLoadGroupBtn" class="config-btn">📥 Зареди</button>
+                        <button id="globalShareGroupBtn" class="config-btn">🔗 Сподели</button>
+                    </div>
                 </div>
                 <small style="color: #666; font-size: 0.85em; margin-top: 5px; display: block;">💡 Ако е празно, ще се създаде автоматично. Използвай "Зареди" за списък с играчи.</small>
             </div>
             
             <div class="input-group">
                 <label for="globalPlayerName">Твоето име:</label>
-                <input type="text" id="globalPlayerName" list="playerNamesList" placeholder="Избери или въведи име" maxlength="20" autocomplete="off">
-                <datalist id="playerNamesList">
-                </datalist>
-                <small style="color: #666; font-size: 0.85em; margin-top: 5px; display: block;">💡 Избери от списъка или напиши ново име</small>
+                <div class="name-input-wrapper">
+                    <select id="globalPlayerNameSelect" class="hidden">
+                        <option value="">Избери от списъка...</option>
+                    </select>
+                    <input type="text" id="globalPlayerName" placeholder="Въведи ново име" maxlength="20" autocomplete="off">
+                </div>
+                <small style="color: #666; font-size: 0.85em; margin-top: 5px; display: block;">💡 Натисни "Зареди" за списък с играчи от групата</small>
             </div>
             
             <div class="game-selection">

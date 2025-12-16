@@ -117,16 +117,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
                 
-                // Update datalist
-                const datalist = document.getElementById('playerNamesList');
-                if (datalist) {
-                    datalist.innerHTML = '';
+                // Update select dropdown
+                const selectElement = document.getElementById('globalPlayerNameSelect');
+                const inputElement = document.getElementById('globalPlayerName');
+                
+                if (selectElement && inputElement) {
+                    selectElement.innerHTML = '<option value="">Избери от списъка...</option>';
                     const sortedPlayers = Array.from(players).sort();
                     sortedPlayers.forEach(name => {
                         const option = document.createElement('option');
                         option.value = name;
-                        datalist.appendChild(option);
+                        option.textContent = name;
+                        selectElement.appendChild(option);
                     });
+                    
+                    // Show/hide appropriate element
+                    if (players.size > 0) {
+                        selectElement.classList.remove('hidden');
+                        inputElement.placeholder = 'Или въведи ново име';
+                        
+                        // Add change listener to populate input when selected
+                        selectElement.onchange = () => {
+                            if (selectElement.value) {
+                                inputElement.value = selectElement.value;
+                            }
+                        };
+                    } else {
+                        selectElement.classList.add('hidden');
+                        inputElement.placeholder = 'Въведи ново име';
+                    }
                 }
                 
                 // Show success
