@@ -2,7 +2,7 @@
 
 ## GitHub Pages Deployment
 
-Това приложение използва GitHub Actions за автоматично deployment на GitHub Pages.
+Това приложение използва GitHub Actions за автоматично deployment на GitHub Pages. 
 
 ### Първоначална настройка
 
