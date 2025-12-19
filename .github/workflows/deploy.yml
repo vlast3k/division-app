@@ -35,6 +35,11 @@ jobs:
           sed "s|%%APPID%%|${{ secrets.APPID }}|g" | \
           sed "s|%%MEASUREMENTID%%|${{ secrets.MEASUREMENTID }}|g" \
           > firebase-config.js
+          
+          echo "✅ firebase-config.js generated"
+          ls -lh firebase-config.js
+          echo "First 3 lines:"
+          head -n 3 firebase-config.js
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
