@@ -23,6 +23,8 @@ class DivisionGame {
         this.startTime = null;
         this.timerInterval = null;
         this.questions = [];
+        this.answers = [];  // Записва всички отговори с детайли
+        this.answerLocked = false;  // Блокира многократно натискане
         this.difficulty = 'medium';
         this.difficultySettings = {
             easy: { time: 15, name: 'Лесно' },
@@ -62,6 +64,7 @@ class DivisionGame {
         this.scorePerMinuteEl = document.getElementById('scorePerMinute');
         this.leaderboardListEl = document.getElementById('leaderboardList');
         this.leaderboardDifficultyEl = document.getElementById('leaderboardDifficulty');
+        this.answersListEl = document.getElementById('divisionAnswersList');
         this.playAgainBtn = document.getElementById('divisionPlayAgainBtn');
     }
 
@@ -189,14 +192,16 @@ class DivisionGame {
 
     calculatePoints(elapsedSeconds) {
         const maxTime = this.difficultySettings[this.difficulty].time;
-        const halfTime = maxTime / 2;
+        const oneThirdTime = maxTime / 3;
+        const twoThirdsTime = maxTime * 2 / 3;
         
-        if (elapsedSeconds <= halfTime) {
+        if (elapsedSeconds <= oneThirdTime) {
             return 10;
         } else if (elapsedSeconds <= maxTime) {
-            return Math.round(10 - ((elapsedSeconds - halfTime) / halfTime * 5));
+            // От 10 до 3 точки за последните 2/3 от времето
+            return Math.round(10 - ((elapsedSeconds - oneThirdTime) / twoThirdsTime * 7));
         } else {
-            return 5;
+            return 3;
         }
     }
 
@@ -213,6 +218,7 @@ class DivisionGame {
         this.currentQuestion = 0;
         this.score = 0;
         this.questions = [];
+        this.answers = [];
         this.gameInProgress = true;
         
         // Генерираме правилния брой задачи според избора
@@ -276,12 +282,17 @@ class DivisionGame {
         
         window.removeEventListener('popstate', this.backButtonHandler);
         
+        // Reset state при quit
+        this.score = 0;
+        this.currentQuestion = 0;
+        
         this.gameScreen.classList.add('hidden');
         this.resultsScreen.classList.add('hidden');
         this.setupScreen.classList.remove('hidden');
     }
 
     showQuestion() {
+        this.answerLocked = false;  // Отключваме за нов въпрос
         this.currentQuestion++;
         this.questionNumEl.textContent = this.currentQuestion;
         this.currentScoreEl.textContent = this.score;
@@ -358,6 +369,12 @@ class DivisionGame {
     }
 
     handleAnswer(userAnswer) {
+        // Предотвратяваме двойно натискане
+        if (this.answerLocked) {
+            return;
+        }
+        this.answerLocked = true;
+        
         this.stopQuestionTimer();
         
         const questionData = this.questions[this.currentQuestion - 1];
@@ -366,6 +383,16 @@ class DivisionGame {
         
         const isCorrect = userAnswer === correctAnswer;
         const points = isCorrect ? this.calculatePoints(elapsed) : 0;
+        
+        // Запазваме отговора
+        this.answers.push({
+            questionNum: this.currentQuestion,
+            number: questionData.number,
+            userAnswer: userAnswer,
+            correctAnswer: correctAnswer,
+            isCorrect: isCorrect,
+            points: points
+        });
         
         this.score += points;
         this.currentScoreEl.textContent = this.score;
@@ -426,6 +453,9 @@ class DivisionGame {
         this.gameScreen.classList.add('hidden');
         this.resultsScreen.classList.remove('hidden');
         
+        // Render answers list
+        this.renderAnswersList();
+        
         // Render leaderboard (async)
         this.renderLeaderboard().catch(err => console.error('[DivisionGame] Error rendering leaderboard:', err));
     }
@@ -444,6 +474,35 @@ class DivisionGame {
         if (days === 0) return 'днес';
         if (days === 1) return 'преди 1 ден';
         return `преди ${days} дни`;
+    }
+
+    renderAnswersList() {
+        if (!this.answersListEl) return;
+        
+        const answerLabels = {
+            '3': '3',
+            '6': '6',
+            '9': '9',
+            'other': 'Друго'
+        };
+        
+        const html = this.answers.map(answer => {
+            const userLabel = answerLabels[answer.userAnswer] || answer.userAnswer;
+            const correctLabel = answerLabels[answer.correctAnswer] || answer.correctAnswer;
+            const rowClass = answer.isCorrect ? 'answer-row-correct' : 'answer-row-incorrect';
+            
+            return `
+                <div class="answer-row ${rowClass}">
+                    <span class="answer-num">${answer.questionNum}.</span>
+                    <span class="answer-number">${answer.number}</span>
+                    <span class="answer-user">→ ${userLabel}</span>
+                    ${!answer.isCorrect ? `<span class="answer-correct">(${correctLabel})</span>` : ''}
+                    <span class="answer-points">${answer.points}т</span>
+                </div>
+            `;
+        }).join('');
+        
+        this.answersListEl.innerHTML = html;
     }
 
     async saveToLeaderboard(result) {

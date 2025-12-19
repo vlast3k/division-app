@@ -497,6 +497,68 @@ input[type="text"]:focus, input[type="number"]:focus {
     font-weight: 900;
 }
 
+.answers-summary {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 30px 0;
+}
+
+.answers-summary h2 {
+    color: #333;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.3em;
+}
+
+.answer-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    gap: 10px;
+}
+
+.answer-row-correct {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+}
+
+.answer-row-incorrect {
+    background: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+.answer-num {
+    font-weight: 700;
+    min-width: 30px;
+    color: #333;
+}
+
+.answer-number {
+    font-weight: 600;
+    min-width: 50px;
+    color: #333;
+}
+
+.answer-user {
+    color: #555;
+}
+
+.answer-correct {
+    color: #dc3545;
+    font-size: 0.9em;
+    font-style: italic;
+}
+
+.answer-points {
+    margin-left: auto;
+    font-weight: 700;
+    color: #667eea;
+}
+
 .leaderboard {
     background: #f8f9fa;
     padding: 25px;

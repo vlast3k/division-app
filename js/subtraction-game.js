@@ -252,122 +252,28 @@ class SubtractionGame {
         let num1, num2;
         
         if (operation === 'addition') {
-            // Addition
-            if (withCarry) {
-                // Generate numbers that require carrying
-                // Build digit by digit ensuring at least one carry
-                const digits1 = [];
-                const digits2 = [];
-                
-                // Start with leftmost digit (non-zero)
-                digits1.push(Math.floor(Math.random() * 9) + 1); // 1-9
-                digits2.push(Math.floor(Math.random() * 9) + 1); // 1-9
-                
-                // Middle digits (if any)
-                for (let i = 1; i < this.numDigits - 1; i++) {
-                    digits1.push(Math.floor(Math.random() * 10));
-                    digits2.push(Math.floor(Math.random() * 10));
-                }
-                
-                // Force carry in rightmost position (ones)
-                const d1 = Math.floor(Math.random() * 5) + 5; // 5-9
-                const d2 = Math.floor(Math.random() * 5) + 5; // 5-9 (ensures d1+d2 >= 10)
-                digits1.push(d1);
-                digits2.push(d2);
-                
-                num1 = parseInt(digits1.join(''));
-                num2 = parseInt(digits2.join(''));
-                
-                // Ensure result doesn't overflow (rare edge case)
-                if (num1 + num2 > max) {
-                    // Reduce last digit of num2
-                    digits2[digits2.length - 1] = 5;
-                    num2 = parseInt(digits2.join(''));
-                }
+            // Addition - просто генерирай две случайни числа
+            // За 2-цифрени: гарантирай сборът < 100
+            if (this.numDigits === 2) {
+                // За двуцифрени: max сбор 99
+                num1 = Math.floor(Math.random() * 50) + 10; // 10-59
+                num2 = Math.floor(Math.random() * (99 - num1 - 9)) + 10; // Така че num1+num2 <= 99
             } else {
-                // No carrying - each position sum < 10
-                const digits1 = [];
-                const digits2 = [];
-                
-                // First digit (non-zero)
-                const d1First = Math.floor(Math.random() * 9) + 1;
-                const d2First = Math.floor(Math.random() * Math.min(9, 10 - d1First)) + 1;
-                digits1.push(d1First);
-                digits2.push(d2First);
-                
-                // Remaining digits
-                for (let i = 1; i < this.numDigits; i++) {
-                    const d1 = Math.floor(Math.random() * 10);
-                    const d2 = Math.floor(Math.random() * (10 - d1));
-                    digits1.push(d1);
-                    digits2.push(d2);
-                }
-                
-                num1 = parseInt(digits1.join(''));
-                num2 = parseInt(digits2.join(''));
+                // За 3+ цифри: просто генерирай в диапазона
+                num1 = Math.floor(Math.random() * (max - min + 1)) + min;
+                num2 = Math.floor(Math.random() * (max - min + 1)) + min;
             }
             return { operation: 'addition', num1, num2 };
         } else {
-            // Subtraction
-            if (withCarry) {
-                // Generate numbers that require borrowing
-                const digits1 = [];
-                const digits2 = [];
-                
-                // First digit: num1 must be >= num2 overall, so start with higher or equal
-                const d1First = Math.floor(Math.random() * 9) + 1; // 1-9
-                const d2First = Math.floor(Math.random() * d1First) + 1; // 1 to d1First
-                digits1.push(d1First);
-                digits2.push(d2First);
-                
-                // Middle digits (if any) - can be anything
-                for (let i = 1; i < this.numDigits - 1; i++) {
-                    digits1.push(Math.floor(Math.random() * 10));
-                    digits2.push(Math.floor(Math.random() * 10));
-                }
-                
-                // Force borrow in rightmost position (ones): d1 < d2
-                const d1Last = Math.floor(Math.random() * 5); // 0-4
-                const d2Last = Math.floor(Math.random() * (10 - d1Last - 1)) + d1Last + 1; // d1+1 to 9
-                digits1.push(d1Last);
-                digits2.push(d2Last);
-                
-                num1 = parseInt(digits1.join(''));
-                num2 = parseInt(digits2.join(''));
-                
-                // Гарантирай че num1 > num2 (резултатът трябва да е положителен)
-                if (num1 <= num2) {
-                    // Увеличи първата цифра на num1 с поне 1
-                    digits1[0] = Math.min(9, digits2[0] + 1 + Math.floor(Math.random() * (9 - digits2[0])));
-                    num1 = parseInt(digits1.join(''));
-                }
-                
-                // Допълнителна проверка - ако все още не е положителен, размени числата
-                if (num1 <= num2) {
-                    [num1, num2] = [num2, num1];
-                }
-            } else {
-                // No borrowing - each position of num1 >= num2
-                const digits1 = [];
-                const digits2 = [];
-                
-                // First digit (non-zero, num1 >= num2)
-                const d1First = Math.floor(Math.random() * 9) + 1;
-                const d2First = Math.floor(Math.random() * (d1First + 1));
-                digits1.push(d1First);
-                digits2.push(d2First);
-                
-                // Remaining digits
-                for (let i = 1; i < this.numDigits; i++) {
-                    const d1 = Math.floor(Math.random() * 10);
-                    const d2 = Math.floor(Math.random() * (d1 + 1));
-                    digits1.push(d1);
-                    digits2.push(d2);
-                }
-                
-                num1 = parseInt(digits1.join(''));
-                num2 = parseInt(digits2.join(''));
+            // Subtraction - просто генерирай две числа, num1 > num2
+            num1 = Math.floor(Math.random() * (max - min + 1)) + min;
+            num2 = Math.floor(Math.random() * num1); // num2 < num1 (винаги положителен резултат)
+            
+            // Гарантирай че num2 е поне с 1 цифра (не 0)
+            if (num2 < min) {
+                num2 = Math.floor(Math.random() * (num1 - min)) + min;
             }
+            
             return { operation: 'subtraction', num1, num2 };
         }
     }
@@ -397,17 +303,10 @@ class SubtractionGame {
         this.totalQuestionsEl.textContent = this.totalQuestions;
         this.maxScoreEl.textContent = this.totalQuestions * 10;
         
-        // Generate questions: 1/4 without carry/borrow, 3/4 with carry/borrow
-        const withoutCarry = Math.floor(this.totalQuestions / 4);
-        const withCarry = this.totalQuestions - withoutCarry;
-        
-        for (let i = 0; i < withoutCarry; i++) {
+        // Generate questions - произволни комбинации
+        for (let i = 0; i < this.totalQuestions; i++) {
             const operation = this.operations[Math.floor(Math.random() * this.operations.length)];
-            this.questions.push(this.generateProblem(operation, false));
-        }
-        for (let i = 0; i < withCarry; i++) {
-            const operation = this.operations[Math.floor(Math.random() * this.operations.length)];
-            this.questions.push(this.generateProblem(operation, true));
+            this.questions.push(this.generateProblem(operation));
         }
         
         // Shuffle questions
@@ -725,110 +624,25 @@ class SubtractionGame {
         const elapsed = (Date.now() - this.questionStartTime) / 1000;
         const { operation, num1, num2 } = questionData;
         
-        // Get user answers for all digits including overflow
+        // Get user answer from all cells (overflow + regular digits)
         const overflowCell = document.getElementById('answerDigitOverflow');
-        const userOverflow = overflowCell ? overflowCell.dataset.value : '';
+        const userOverflow = overflowCell ? (overflowCell.dataset.value || '') : '';
         
         const userDigits = [];
         for (let i = 0; i < this.numDigits; i++) {
             const cell = document.getElementById(`answerDigit${i}`);
-            userDigits.push(cell ? cell.dataset.value : '');
+            userDigits.push(cell ? (cell.dataset.value || '0') : '0');
         }
+        
+        // Construct user's full answer as a number
+        const userAnswerStr = userOverflow + userDigits.join('');
+        const userAnswer = parseInt(userAnswerStr) || 0;
         
         // Calculate correct answer
         const correctResult = operation === 'addition' ? num1 + num2 : num1 - num2;
-        const correctResultStr = correctResult.toString();
         
-        // Determine if we need overflow digit (result is n+1 digits)
-        const hasOverflow = correctResultStr.length > this.numDigits;
-        const correctOverflow = hasOverflow ? correctResultStr[0] : '';
-        const correctStr = hasOverflow 
-            ? correctResultStr.slice(1).padStart(this.numDigits, '0')
-            : correctResultStr.padStart(this.numDigits, '0');
-        
-        // Determine which positions need carry/borrow
-        const needsCarry = {};
-        for (let i = 0; i < this.numDigits - 1; i++) {
-            needsCarry[i] = false;
-        }
-        
-        const num1Str = num1.toString().padStart(this.numDigits, '0');
-        const num2Str = num2.toString().padStart(this.numDigits, '0');
-        
-        if (operation === 'addition') {
-            let carry = 0;
-            // Check from rightmost to leftmost
-            for (let i = this.numDigits - 1; i >= 0; i--) {
-                const d1 = parseInt(num1Str[i]);
-                const d2 = parseInt(num2Str[i]);
-                const sum = d1 + d2 + carry;
-                carry = sum >= 10 ? 1 : 0;
-                
-                // Mark carry needed at position to the left (but not overflow)
-                if (carry === 1 && i > 0) {
-                    needsCarry[i - 1] = true;
-                }
-            }
-        } else {
-            let borrow = 0;
-            for (let i = this.numDigits - 1; i > 0; i--) {
-                const d1 = parseInt(num1Str[i]);
-                const d2 = parseInt(num2Str[i]);
-                if (d1 - borrow < d2) {
-                    needsCarry[i - 1] = true;
-                    borrow = 1;
-                } else {
-                    borrow = 0;
-                }
-            }
-        }
-        
-        // Check overflow digit
-        let overflowCorrect = true;
-        if (hasOverflow) {
-            // Should have overflow digit
-            if (userOverflow !== correctOverflow) {
-                overflowCorrect = false;
-            }
-        } else {
-            // Should NOT have overflow digit (or should be empty/0)
-            if (userOverflow !== '' && userOverflow !== '0') {
-                overflowCorrect = false;
-            }
-        }
-        
-        // Check if all digits are correct
-        let digitsCorrect = true;
-        for (let i = 0; i < this.numDigits; i++) {
-            const correctDigit = correctStr[i];
-            const userDigit = userDigits[i];
-            
-            // For leading zeros, allow empty or '0'
-            if (i < this.numDigits - 1 && correctDigit === '0') {
-                if (userDigit !== '' && userDigit !== '0') {
-                    digitsCorrect = false;
-                    break;
-                }
-            } else {
-                if (userDigit !== correctDigit) {
-                    digitsCorrect = false;
-                    break;
-                }
-            }
-        }
-        
-        // Check if all carry/borrow marks are correct
-        let carryCorrect = true;
-        
-        // Check regular carries (no overflow carry to check)
-        for (let i = 0; i < this.numDigits - 1; i++) {
-            if (this.carryStates[i] !== needsCarry[i]) {
-                carryCorrect = false;
-                break;
-            }
-        }
-        
-        const isCorrect = digitsCorrect && carryCorrect && overflowCorrect;
+        // Simple comparison
+        const isCorrect = userAnswer === correctResult;
         
         const points = isCorrect ? this.calculatePoints(elapsed) : 0;
         
